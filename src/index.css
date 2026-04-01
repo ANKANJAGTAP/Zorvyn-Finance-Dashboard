@@ -1,0 +1,212 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Zorvyn Design System (CSS Variables) ─── */
+:root {
+  /* Core Backgrounds */
+  --bg-main: #080C16;
+  --bg-section: #252B37;
+  --bg-glass: rgba(8, 12, 22, 0.5);
+
+  /* Card / Surface */
+  --card-bg: rgba(11, 17, 30, 0.5);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --card-border-hover: rgba(255, 255, 255, 0.2);
+
+  /* Typography */
+  --text-primary: #FFFFFF;
+  --text-secondary: #9DA3AF;
+  --text-muted: rgba(157, 163, 175, 0.7);
+
+  /* Brand */
+  --primary: #427CF0;
+  --accent-green: #22C38E;
+  --accent-purple: #855CD6;
+
+  /* Gradients */
+  --gradient-main: linear-gradient(135deg, #427CF0, #855CD6, #22C38E);
+  --gradient-blue: linear-gradient(135deg, #427CF0, #22C38E);
+  --gradient-purple: linear-gradient(135deg, #855CD6, #EC4899);
+
+  /* Semantic */
+  --success: #22C38E;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+
+  /* Glow */
+  --glow-blue: rgba(66, 124, 240, 0.2);
+  --glow-green: rgba(34, 195, 142, 0.15);
+  --glow-purple: rgba(133, 92, 214, 0.1);
+}
+
+/* ─── Base Reset ─── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── Scrollbar Styling ─── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ─── Glass Effect Utility ─── */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.glass-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px;
+  transition: all 200ms ease;
+}
+
+.glass-card:hover {
+  border-color: var(--card-border-hover);
+}
+
+/* ─── Skeleton Animation ─── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* ─── Status Dot ─── */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot--completed { background-color: var(--success); }
+.status-dot--pending { background-color: var(--warning); }
+
+/* ─── Amount Colors ─── */
+.amount--income { color: var(--success); }
+.amount--expense { color: var(--danger); }
+
+/* ─── Badge ─── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.badge--income {
+  background: rgba(34, 195, 142, 0.15);
+  color: var(--success);
+}
+
+.badge--expense {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+}
+
+.badge--admin {
+  background: rgba(66, 124, 240, 0.15);
+  color: var(--primary);
+}
+
+.badge--viewer {
+  background: rgba(157, 163, 175, 0.15);
+  color: var(--text-secondary);
+}
+
+/* ─── Transition Utilities ─── */
+.transition-default {
+  transition: all 200ms ease;
+}
+
+/* ─── Micro-interaction Utilities ─── */
+.interactive-card {
+  transition: transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              box-shadow 300ms ease,
+              border-color 300ms ease;
+}
+
+.interactive-card:hover {
+  transform: scale(1.02) translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.interactive-card:active {
+  transform: scale(0.98);
+}
+
+.btn-press {
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.btn-press:active {
+  transform: scale(0.96);
+}
+
+/* ─── Enhanced Glass Card ─── */
+.glass-card {
+  transition: all 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+/* ─── Number Input Spinner Removal ─── */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+}
