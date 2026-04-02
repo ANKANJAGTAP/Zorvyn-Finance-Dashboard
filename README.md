@@ -150,14 +150,21 @@ npm run dev
 
 ### 🟢 Outfyld (Full-Stack Product)
 
-A sports booking platform solving turf reservation problems.
+A production-grade sports booking platform solving real-world turf reservation problems.
 
 👉 https://www.outfyld.in/
 
-* Built using Next, Node.js, and modern APIs
-* Focused on real-world booking workflows and scalability
+* Built with Next.js, Node.js, and scalable backend architecture
+* Handles real user workflows and booking logic
 
 ---
+
+### 🌐 Portfolio
+
+Explore more of my work and projects:
+
+👉 https://www.ankanjagtap.site/
+
 
 ## 👤 Author
 
