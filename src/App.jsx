@@ -1,12 +1,16 @@
+// App.jsx
 import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import Sidebar from './components/Sidebar'
 import Topbar from './components/Topbar'
 import Dashboard from './pages/Dashboard'
 import Transactions from './pages/Transactions'
 import Insights from './pages/Insights'
+import Notifications from './pages/Notifications'
+import SettingsPage from './pages/SettingsPage'
+import Help from './pages/Help'
 import TransactionModal from './components/TransactionModal'
 import useStore from './store/useStore'
 
@@ -17,7 +21,6 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(false)
   const addTransaction = useStore(s => s.addTransaction)
 
-  // Responsive sidebar
   useEffect(() => {
     const checkWidth = () => {
       const mobile = window.innerWidth < 768
@@ -29,7 +32,6 @@ export default function App() {
     return () => window.removeEventListener('resize', checkWidth)
   }, [])
 
-  // Close mobile sidebar on route change
   useEffect(() => {
     if (isMobile) setSidebarCollapsed(true)
   }, [location.pathname, isMobile])
@@ -56,27 +58,31 @@ export default function App() {
       />
 
       {/* Mobile overlay */}
-      {isMobile && !sidebarCollapsed && (
-        <div
-          className="fixed inset-0 bg-black/50 z-20"
-          onClick={() => setSidebarCollapsed(true)}
-          aria-hidden="true"
-        />
-      )}
+      <AnimatePresence>
+        {isMobile && !sidebarCollapsed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
+            onClick={() => setSidebarCollapsed(true)}
+            aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
 
       {/* Main Content Area */}
       <div
         className="flex-1 transition-all duration-300 min-h-screen flex flex-col"
         style={{ marginLeft: sidebarWidth }}
       >
-        {/* Topbar */}
         <Topbar
           onAddTransaction={() => setModalOpen(true)}
           onMenuClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           isMobile={isMobile}
         />
 
-        {/* Page Content */}
         <main className="flex-1 p-4 md:p-6 overflow-auto" role="main">
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
@@ -84,12 +90,14 @@ export default function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/insights" element={<Insights />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/help" element={<Help />} />
             </Routes>
           </AnimatePresence>
         </main>
       </div>
 
-      {/* Global Add Transaction Modal (from Topbar) */}
       <TransactionModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}

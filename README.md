@@ -1,207 +1,197 @@
-# 🚀 Zorvyn Finance Dashboard
+# Zorvyn Finance Dashboard
 
 A production-inspired financial analytics dashboard designed to simulate a real-world SaaS product used by finance teams.
 
-This project focuses on **clean UI systems, scalable state management, and product-level UX thinking**, rather than just visual implementation.
+This project focuses on clean UI systems, scalable state management, and product-level UX thinking rather than just visual implementation.
 
 ---
 
-## 🌐 Live Demo
+## Live Demo
 
-👉 https://zorvyn-finance-dashboard-ui.vercel.app
-👉 Repository: https://github.com/ANKANJAGTAP/Zorvyn-Finance-Dashboard-UI
+https://zorvyn-finance-dashboard-ui.vercel.app
+Repository: https://github.com/ANKANJAGTAP/Zorvyn-Finance-Dashboard-UI
 
 ---
 
-## 🧠 Product Thinking
+## Overview
 
-Instead of building a "UI project", this dashboard was designed as:
+This dashboard is designed as a simplified internal financial analytics tool.
 
-> **A simplified internal financial analytics tool**
-
-Key goals:
+Key objectives:
 
 * Reflect real-world financial workflows
-* Maintain visual consistency with Zorvyn's design system
-* Ensure data → UI → insight flow is intuitive
-* Keep interactions lightweight but meaningful
+* Maintain visual consistency with a defined design system
+* Ensure intuitive data-to-insight flow
+* Provide meaningful, lightweight interactions
 
 ---
 
-## ✨ Features
+## Features
 
-### 📊 Dashboard
+### Dashboard
 
 * Financial summary (Balance, Income, Expenses, Savings Rate)
-* **Animated number counters** — values tick from 0 → actual amount on load
+* Animated number counters for key metrics
 * Time-based trend analysis (7D / 30D / 90D)
-* Category-wise spending breakdown (interactive donut chart)
+* Category-wise spending breakdown (interactive chart)
 * Recent transactions preview with empty state handling
-* **Progressive loading** — cards → charts → table with staggered reveal
+* Progressive loading with staged content rendering
 
 ---
 
-### 📋 Transactions
+### Transactions
 
-* Debounced search with instant UI sync
-* Multi-filter (Type, Category) with sort options
-* CRUD operations (Admin only) with **toast feedback**
-* **Undo delete** — toast with 5s undo window
-* **Mobile-responsive card layout** — stacked cards on small screens
-* Export CSV (exports filtered dataset) with success toast
-* Empty states for no data + no filter results
+* Debounced search with real-time updates
+* Multi-filtering (type, category) and sorting
+* CRUD operations (Admin role only) with feedback
+* Undo delete functionality with a timed window
+* Responsive layout with mobile-friendly card view
+* CSV export of filtered data
+* Proper handling of empty and filtered states
 
 ---
 
-### 🧠 Insights (Key Differentiator)
+### Insights
 
 * Highest spending category detection
-* Monthly comparison analysis
+* Monthly comparison metrics
 * Savings rate calculation
-* **AI-style financial summary** (human-readable insights)
-* **Smart alerts** — warns when a category exceeds 40% of spending
-* Zero-data empty state with CTA
+* Human-readable financial summary
+* Alerts for disproportionate spending patterns
+* Graceful handling of zero-data scenarios
 
 ---
 
-### 🔐 Role-Based UI
+### Role-Based UI
 
-* **Viewer** → read-only
-* **Admin** → full control (Add / Edit / Delete)
-
----
-
-## 🔄 User Interaction Flows
-
-| Action | Flow |
-|--------|------|
-| Add Transaction | Modal → Toast ✅ → Dashboard updates → Chart animates |
-| Delete Transaction | Undo toast → Revert possible within 5s |
-| Edit Transaction | Modal → Toast ✅ → UI updates instantly |
-| Filter/Search | Instant UI + chart sync (no loading state) |
-| Export CSV | Toast ✅ with file name confirmation |
+* Viewer: read-only access
+* Admin: full access (create, update, delete)
 
 ---
 
-## ⚙️ Architecture & State Design
+## User Interaction Flows
 
-State is managed using **Zustand** with a clear separation:
+| Action             | Flow                                             |
+| ------------------ | ------------------------------------------------ |
+| Add Transaction    | Modal → confirmation feedback → dashboard update |
+| Delete Transaction | Undo-enabled feedback → reversible action        |
+| Edit Transaction   | Modal → immediate UI update                      |
+| Filter/Search      | Instant synchronization across UI and charts     |
+| Export CSV         | File generation with confirmation feedback       |
+
+---
+
+## Architecture and State Management
+
+State is managed using Zustand with clear separation of responsibilities.
 
 ### Core State
 
 * transactions (persisted)
 * role (persisted)
-* filters (session only)
+* filters (session-based)
 * selectedMetric
 * timeFilter
 
-### Derived State (Computed In-Store)
+### Derived State
 
 * totalBalance, totalIncome, totalExpense
 * filteredTransactions
 * categoryBreakdown
-* insights (AI summary data)
-* chartData (time-filtered, running balance)
+* insights
+* chartData
 
-👉 Derived values are computed in-store, not in components — improving performance and separation of concerns.
-
-### State Strategy
-
-* `transactions` → global (Zustand, persisted)
-* `filters` → global (Zustand, not persisted)
-* `insights` → derived in-store via getters
-* Charts react to `timeFilter` + `transactions` (filtered state)
-* Components subscribe via specific selectors (not full store)
+Derived values are computed within the store to ensure separation of concerns and performance efficiency.
 
 ---
 
-## 🧪 Edge Case Handling
+## State Strategy
 
-- Empty states handled across Dashboard, Transactions, and Insights
-- Loading states implemented using **shimmer skeleton UI** with progressive reveal
-- Role-based UI enforced at component level
-- Input validation for transaction creation:
-  - Prevents ₹0 and negative amounts
-  - Prevents future dates
-  - Max character limit on descriptions
-  - Inline error messages + toast on validation failure
-- Error states with retry buttons on data load failures
-- Undo pattern for destructive actions (delete)
+* Global state handled via Zustand
+* Derived data computed inside the store
+* Components subscribe using selective selectors
+* Charts react to filtered and time-based state
 
 ---
 
-## 🎯 Performance Optimizations
+## Edge Case Handling
 
-- Memoized derived state (`useMemo` for totals computation)
-- Specific Zustand selectors to prevent unnecessary re-renders
-- `requestAnimationFrame`-based animated counters (60fps)
-- Progressive/staggered loading (300ms → 550ms → 750ms)
-- Framer Motion `AnimatePresence` for page transitions
-- Chart animations with 800ms ease-out curves
+* Empty states across all major sections
+* Loading states using skeleton UI
+* Input validation:
 
----
-
-## ♿ Accessibility
-
-- `aria-label` on all interactive buttons and inputs
-- `aria-current="page"` on active navigation links
-- `role="dialog"` and `aria-modal` on modals
-- `role="radiogroup"` on toggle groups (type/category selectors)
-- `focus-visible` ring styling for keyboard users
-- Semantic HTML: `<nav>`, `<main>`, `<header>`, `<aside>`
-- Escape key to close modals
-- `aria-invalid` and `aria-describedby` for form validation errors
+  * Prevents zero or negative amounts
+  * Prevents future dates
+  * Character limits enforced
+* Error handling with retry options
+* Undo pattern for destructive actions
 
 ---
 
-## 🎨 Design System
+## Performance Considerations
 
-* Dark-first theme inspired by Zorvyn
-* CSS custom properties for all design tokens (colors, spacing, radius)
-* Gradient accents (Indigo → Purple → Cyan → Emerald)
-* Glassmorphism UI (blur + subtle borders)
-* Consistent typography using Inter
-* **Reusable `<Button />` component** with variants (primary, secondary, ghost, danger)
-* **Reusable `<EmptyState />` component** with configurable presets
-* Micro-interactions: hover glow, tap scale, card elevation, tooltip animations
+* Memoized derived computations
+* Optimized Zustand selectors to prevent unnecessary re-renders
+* Smooth animations using requestAnimationFrame
+* Staggered content loading for perceived performance
+* Controlled chart rendering and animation timing
 
 ---
 
-## 🧱 Tech Stack
+## Accessibility
 
-* React 18 (Vite)
+* ARIA labels for interactive elements
+* Proper semantic HTML structure
+* Keyboard navigation support
+* Accessible modal behavior
+* Validation messaging for assistive technologies
+
+---
+
+## Design System
+
+* Dark theme with consistent visual language
+* Centralized design tokens (colors, spacing, radius)
+* Gradient accents for emphasis
+* Glassmorphism-based surfaces
+* Reusable UI components (buttons, empty states)
+* Consistent typography and spacing
+
+---
+
+## Technology Stack
+
+* React (Vite)
 * Tailwind CSS
-* Zustand (persistent state)
+* Zustand
 * React Router
 * Recharts
 * Framer Motion
 * Lucide React
-* **Sonner** (toast notifications)
+* Sonner (notifications)
 
 ---
 
-## 📦 Key Engineering Decisions
+## Engineering Decisions
 
-* Used **React Router** for realistic navigation flows
-* Chose **Zustand** for simplicity + scalability
-* Kept insights **independent from time filters** (reduces cognitive load)
-* CSV export reflects **current filtered state** (real-world behavior)
-* **Sonner over react-hot-toast** — modern API, built-in dark mode, undo pattern
-* **Shared `<Button />` component** — all buttons use consistent design system
-* **No inline styles policy** — Tailwind + CSS custom properties
-* **Progressive loading** — staggered reveal for premium feel
+* Zustand chosen for simplicity and scalability
+* React Router used for realistic navigation patterns
+* Derived state computed in-store to reduce component complexity
+* CSV export reflects filtered UI state
+* Shared component system for UI consistency
+* Minimal inline styling policy
 
 ---
 
-## ⚠️ Trade-offs
+## Trade-offs
 
-* No backend (mock data used intentionally to focus on frontend architecture)
-* Dark mode only (aligned with design direction)
-* Some dynamic color styles use minimal inline CSS (category colors, gradient accents)
+* No backend integration (mock data used intentionally)
+* Dark mode only
+* Some dynamic styling requires limited inline values
 
 ---
 
-## 🛠️ Setup
+## Setup
 
 ```bash
 git clone https://github.com/ANKANJAGTAP/Zorvyn-Finance-Dashboard-UI
@@ -212,38 +202,30 @@ npm run dev
 
 ---
 
-## 📈 Future Improvements
+## Future Improvements
 
-* Backend integration (Node + DB)
-* Authentication & user sessions
+* Backend integration
+* Authentication system
 * Real-time analytics
-* Light mode system
-* Lazy-loaded route splitting
+* Light theme support
+* Route-level code splitting
 
 ---
 
-## 🔗 Related Work
+## Related Work
 
-### 🟢 Outfyld (Full-Stack Product)
+Outfyld (Full-Stack Product)
+https://www.outfyld.in/
 
-A production-grade sports booking platform solving real-world turf reservation problems.
+A sports booking platform focused on real-world scheduling and reservation workflows.
 
-👉 https://www.outfyld.in/
-
-* Built with Next.js, Node.js, and scalable backend architecture
-* Handles real user workflows and booking logic
+Portfolio
+https://www.ankanjagtap.site/
 
 ---
 
-### 🌐 Portfolio
+## Author
 
-Explore more of my work and projects:
-
-👉 https://www.ankanjagtap.site/
-
-
-## 👤 Author
-
-**Ankan Jagtap**
-B.Tech CSE (2027)
-Full-stack developer focused on building scalable systems and product-grade UIs
+Ankan Jagtap
+B.Tech Computer Science Engineering (2027)
+Full-stack developer focused on scalable systems and product-oriented interfaces

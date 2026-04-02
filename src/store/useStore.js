@@ -141,32 +141,35 @@ const useStore = create(
       },
 
       getInsights: () => {
-        const { transactions } = get()
+        const { transactions, timeFilter } = get()
         const now = new Date()
-        const thirtyDaysAgo = new Date(now)
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-        const sixtyDaysAgo = new Date(now)
-        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
+        const daysMap = { '7d': 7, '30d': 30, '90d': 90 }
+        const days = daysMap[timeFilter] || 30
 
-        const currentMonth = transactions.filter(t => new Date(t.date) >= thirtyDaysAgo)
-        const prevMonth = transactions.filter(
-          t => new Date(t.date) >= sixtyDaysAgo && new Date(t.date) < thirtyDaysAgo
+        const periodStart = new Date(now)
+        periodStart.setDate(periodStart.getDate() - days)
+        const prevPeriodStart = new Date(periodStart)
+        prevPeriodStart.setDate(prevPeriodStart.getDate() - days)
+
+        const currentPeriod = transactions.filter(t => new Date(t.date) >= periodStart)
+        const prevPeriod = transactions.filter(
+          t => new Date(t.date) >= prevPeriodStart && new Date(t.date) < periodStart
         )
 
-        // Current month totals
-        const currentIncome = currentMonth.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-        const currentExpense = currentMonth.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
-        const prevExpense = prevMonth.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+        // Current period totals
+        const currentIncome = currentPeriod.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+        const currentExpense = currentPeriod.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+        const prevExpense = prevPeriod.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
 
         // Highest spending category
         const categoryTotals = {}
-        currentMonth.filter(t => t.type === 'expense').forEach(t => {
+        currentPeriod.filter(t => t.type === 'expense').forEach(t => {
           categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount
         })
         const totalExpense = Object.values(categoryTotals).reduce((s, v) => s + v, 0)
         const topCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]
 
-        // Monthly comparison
+        // Period-over-period comparison
         const monthlyChange = prevExpense > 0
           ? (((currentExpense - prevExpense) / prevExpense) * 100).toFixed(1)
           : null
@@ -185,7 +188,7 @@ const useStore = create(
           currentExpense,
           currentIncome,
           prevExpense,
-          hasEnoughData: prevMonth.length > 0,
+          hasEnoughData: prevPeriod.length > 0,
         }
       },
 
