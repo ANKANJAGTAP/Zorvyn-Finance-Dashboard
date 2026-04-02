@@ -64,6 +64,7 @@ export default function SummaryCards({ loading }) {
   const selectedMetric = useStore(s => s.selectedMetric)
   const setSelectedMetric = useStore(s => s.setSelectedMetric)
   const timeFilter = useStore(s => s.timeFilter)
+  const transactions = useStore(s => s.transactions)
   const getTimeFilteredTransactions = useStore(s => s.getTimeFilteredTransactions)
 
   const totals = useMemo(() => {
@@ -77,7 +78,7 @@ export default function SummaryCards({ loading }) {
     const balance = income - expense
     const savingsRate = income > 0 ? ((income - expense) / income) * 100 : 0
     return { income, expense, balance, savingsRate }
-  }, [timeFilter, getTimeFilteredTransactions])
+  }, [timeFilter, transactions, getTimeFilteredTransactions])
 
   if (loading) {
     return (

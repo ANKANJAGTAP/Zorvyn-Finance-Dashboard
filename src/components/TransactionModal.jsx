@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   X, ArrowDownLeft, ArrowUpRight,
   UtensilsCrossed, Car, ShoppingBag, Receipt, Gamepad2,
@@ -32,6 +32,15 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
   const [errors, setErrors] = useState({})
   const [submitAnim, setSubmitAnim] = useState(false)
   const amountRef = useRef(null)
+  const [shouldRender, setShouldRender] = useState(false)
+
+  useEffect(() => {
+    if (isOpen) setShouldRender(true)
+  }, [isOpen])
+
+  const handleAnimationComplete = () => {
+    if (!isOpen) setShouldRender(false)
+  }
 
   useEffect(() => {
     if (editData) {
@@ -80,6 +89,7 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
         ...form,
         amount: Number(form.amount),
       })
+      setSubmitAnim(false)
       onClose()
     }, 400)
   }
@@ -91,30 +101,32 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
 
   const activeCategories = form.type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES
 
+  if (!shouldRender) return null
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
-          onClick={onClose}
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto"
-          style={{
-            background: 'radial-gradient(ellipse at center, rgba(66, 124, 240, 0.08), rgba(0,0,0,0.7))',
-            backdropFilter: 'blur(8px)',
-            padding: '2rem 1rem',
-          }}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 30 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 30 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-            className="w-full max-w-[480px] my-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: isOpen ? 1 : 0 }}
+      transition={{ duration: 0.25 }}
+      onAnimationComplete={handleAnimationComplete}
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto"
+      style={{
+        background: 'radial-gradient(ellipse at center, rgba(66, 124, 240, 0.08), rgba(0,0,0,0.7))',
+        backdropFilter: 'blur(8px)',
+        padding: '2rem 1rem',
+        pointerEvents: isOpen ? 'auto' : 'none',
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: 30 }}
+        animate={isOpen
+          ? { opacity: 1, scale: 1, y: 0 }
+          : { opacity: 0, scale: 0.92, y: 30 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+        className="w-full max-w-[480px] my-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
             <div
               className="relative overflow-hidden rounded-2xl"
               style={{
@@ -427,9 +439,7 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
                 </form>
               </div>
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      </motion.div>
+    </motion.div>
   )
 }

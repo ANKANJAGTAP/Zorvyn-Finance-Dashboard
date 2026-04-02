@@ -30,6 +30,7 @@ export default function Transactions() {
   const role = useStore(s => s.role)
   const filters = useStore(s => s.filters)
   const updateFilters = useStore(s => s.updateFilters)
+  useStore(s => s.transactions) // Subscribe for reactivity
   const getFilteredTransactions = useStore(s => s.getFilteredTransactions)
   const addTransaction = useStore(s => s.addTransaction)
   const editTransaction = useStore(s => s.editTransaction)

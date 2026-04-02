@@ -46,6 +46,7 @@ const CustomLegend = ({ payload, hiddenCategories, onToggle }) => {
 export default function SpendingDonut({ loading }) {
   const [hiddenCategories, setHiddenCategories] = useState([])
   const timeFilter = useStore(s => s.timeFilter)
+  const transactions = useStore(s => s.transactions)
   const getCategoryBreakdown = useStore(s => s.getCategoryBreakdown)
   const rawData = getCategoryBreakdown()
 

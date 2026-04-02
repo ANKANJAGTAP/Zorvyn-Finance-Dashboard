@@ -53,6 +53,7 @@ function generateSummaryText(insights) {
 
 export default function Insights() {
   const [loading, setLoading] = useState(true)
+  useStore(s => s.transactions) // Subscribe for reactivity
   const getInsights = useStore(s => s.getInsights)
   const insights = getInsights()
   const role = useStore(s => s.role)

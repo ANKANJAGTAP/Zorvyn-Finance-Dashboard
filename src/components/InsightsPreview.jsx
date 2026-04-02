@@ -5,6 +5,7 @@ import { formatAmount } from '../utils/formatters'
 
 export default function InsightsPreview({ loading }) {
   const navigate = useNavigate()
+  useStore(s => s.transactions) // Subscribe for reactivity
   const getInsights = useStore(s => s.getInsights)
   const insights = getInsights()
 

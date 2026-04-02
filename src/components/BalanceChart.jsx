@@ -35,6 +35,7 @@ export default function BalanceChart({ loading }) {
   const [chartType, setChartType] = useState('area')
   const selectedMetric = useStore(s => s.selectedMetric)
   const timeFilter = useStore(s => s.timeFilter)
+  const transactions = useStore(s => s.transactions)
   const getChartData = useStore(s => s.getChartData)
   const chartData = getChartData()
 
