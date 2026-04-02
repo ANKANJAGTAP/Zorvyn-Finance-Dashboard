@@ -1,43 +1,73 @@
 import { useState } from 'react'
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { BarChart3, TrendingUp } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
+import { BarChart3, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react'
 import useStore from '../store/useStore'
 import { formatAmount } from '../utils/formatters'
+import EmptyState from './EmptyState'
+import Button from './ui/Button'
 
-const CustomTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null
-
+/* ─── Animated Custom Tooltip ─── */
+const AnimatedTooltip = ({ active, payload, label }) => {
   return (
-    <div
-      className="rounded-xl p-3 min-w-[160px]"
-      style={{
-        background: 'rgba(20, 26, 42, 0.95)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-        backdropFilter: 'blur(10px)',
-      }}
-    >
-      <p className="text-text-muted text-xs mb-2 font-medium">{label}</p>
-      {payload.map((item, i) => (
-        <div key={i} className="flex items-center justify-between gap-4 mb-1">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color, boxShadow: `0 0 6px ${item.color}` }} />
-            <span className="text-xs text-text-secondary capitalize">{item.dataKey}</span>
-          </div>
-          <span className="text-xs font-semibold text-white">{formatAmount(item.value)}</span>
-        </div>
-      ))}
-    </div>
+    <AnimatePresence>
+      {active && payload?.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 6, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 6, scale: 0.95 }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
+          className="chart-tooltip"
+        >
+          <p className="text-text-muted text-xs mb-2 font-medium">{label}</p>
+          {payload.map((item, i) => (
+            <div key={i} className="flex items-center justify-between gap-4 mb-1">
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: item.color, boxShadow: `0 0 6px ${item.color}` }}
+                />
+                <span className="text-xs text-text-secondary capitalize">{item.dataKey}</span>
+              </div>
+              <span className="text-xs font-semibold text-white">{formatAmount(item.value)}</span>
+            </div>
+          ))}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+/* ─── Custom Cursor (vertical crosshair) ─── */
+const CustomCursor = ({ points, height }) => {
+  if (!points || !points[0]) return null
+  return (
+    <line
+      x1={points[0].x}
+      y1={0}
+      x2={points[0].x}
+      y2={height}
+      stroke="rgba(255, 255, 255, 0.12)"
+      strokeDasharray="4 4"
+      strokeWidth={1}
+    />
   )
 }
 
 export default function BalanceChart({ loading }) {
   const [chartType, setChartType] = useState('area')
+  const [hasError, setHasError] = useState(false)
   const selectedMetric = useStore(s => s.selectedMetric)
-  const timeFilter = useStore(s => s.timeFilter)
   const transactions = useStore(s => s.transactions)
+  const timeFilter = useStore(s => s.timeFilter) // Subscribe to trigger re-render on 7d/30d/90d change
   const getChartData = useStore(s => s.getChartData)
-  const chartData = getChartData()
+
+  let chartData = []
+  try {
+    chartData = getChartData()
+  } catch {
+    setHasError(true)
+  }
 
   const formattedData = chartData.map(d => ({
     ...d,
@@ -66,6 +96,41 @@ export default function BalanceChart({ loading }) {
     )
   }
 
+  if (hasError) {
+    return (
+      <div className="glass-card p-6">
+        <div className="error-state p-8 flex flex-col items-center justify-center text-center">
+          <AlertCircle size={32} className="text-danger mb-3" />
+          <h3 className="text-white font-semibold mb-1">Failed to load chart</h3>
+          <p className="text-text-muted text-sm mb-4">Something went wrong while rendering the chart data.</p>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setHasError(false)}
+            aria-label="Retry loading chart"
+          >
+            <RefreshCw size={14} />
+            Retry
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (formattedData.length === 0) {
+    return (
+      <div className="glass-card p-6">
+        <h3 className="text-white font-semibold mb-5">{config.label} Trend</h3>
+        <EmptyState
+          variant="no-data"
+          title="No chart data"
+          description="Add transactions to see your financial trends over time."
+          className="py-8"
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="glass-card p-6">
       <div className="flex items-center justify-between mb-5">
@@ -74,13 +139,14 @@ export default function BalanceChart({ loading }) {
         </h3>
 
         {/* Chart Type Toggle */}
-        <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)' }}>
+        <div className="flex items-center gap-1 p-1 rounded-lg bg-white/[0.05]">
           <button
             onClick={() => setChartType('area')}
             className={`p-1.5 rounded-md transition-all duration-200 ${
               chartType === 'area' ? 'bg-primary/20 text-primary' : 'text-text-muted hover:text-white'
             }`}
-            title="Area Chart"
+            aria-label="Switch to area chart"
+            aria-pressed={chartType === 'area'}
           >
             <TrendingUp size={16} />
           </button>
@@ -89,7 +155,8 @@ export default function BalanceChart({ loading }) {
             className={`p-1.5 rounded-md transition-all duration-200 ${
               chartType === 'bar' ? 'bg-primary/20 text-primary' : 'text-text-muted hover:text-white'
             }`}
-            title="Bar Chart"
+            aria-label="Switch to bar chart"
+            aria-pressed={chartType === 'bar'}
           >
             <BarChart3 size={16} />
           </button>
@@ -116,14 +183,6 @@ export default function BalanceChart({ loading }) {
                   <stop offset="40%" stopColor="#EF4444" stopOpacity={0.2} />
                   <stop offset="100%" stopColor="#EF4444" stopOpacity={0.02} />
                 </linearGradient>
-                {/* Glow filter for the stroke */}
-                <filter id="glow">
-                  <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-                  <feMerge>
-                    <feMergeNode in="coloredBlur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
               <XAxis
@@ -138,7 +197,10 @@ export default function BalanceChart({ loading }) {
                 tickLine={false}
                 tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip
+                content={<AnimatedTooltip />}
+                cursor={<CustomCursor />}
+              />
               {activeMetric === 'balance' && (
                 <Area
                   type="monotone"
@@ -147,7 +209,9 @@ export default function BalanceChart({ loading }) {
                   fill="url(#gradient-balance)"
                   strokeWidth={3}
                   dot={false}
-                  activeDot={{ r: 6, stroke: metricConfig.balance.color, strokeWidth: 2, fill: 'var(--bg-main)', filter: 'drop-shadow(0 0 6px rgba(66, 124, 240, 0.5))' }}
+                  activeDot={{ r: 6, stroke: metricConfig.balance.color, strokeWidth: 2, fill: 'var(--bg-main)' }}
+                  animationDuration={800}
+                  animationEasing="ease-out"
                 />
               )}
               {activeMetric === 'income' && (
@@ -158,7 +222,9 @@ export default function BalanceChart({ loading }) {
                   fill="url(#gradient-income)"
                   strokeWidth={3}
                   dot={false}
-                  activeDot={{ r: 6, stroke: metricConfig.income.color, strokeWidth: 2, fill: 'var(--bg-main)', filter: 'drop-shadow(0 0 6px rgba(34, 195, 142, 0.5))' }}
+                  activeDot={{ r: 6, stroke: metricConfig.income.color, strokeWidth: 2, fill: 'var(--bg-main)' }}
+                  animationDuration={800}
+                  animationEasing="ease-out"
                 />
               )}
               {activeMetric === 'expense' && (
@@ -169,7 +235,9 @@ export default function BalanceChart({ loading }) {
                   fill="url(#gradient-expense)"
                   strokeWidth={3}
                   dot={false}
-                  activeDot={{ r: 6, stroke: metricConfig.expense.color, strokeWidth: 2, fill: 'var(--bg-main)', filter: 'drop-shadow(0 0 6px rgba(239, 68, 68, 0.5))' }}
+                  activeDot={{ r: 6, stroke: metricConfig.expense.color, strokeWidth: 2, fill: 'var(--bg-main)' }}
+                  animationDuration={800}
+                  animationEasing="ease-out"
                 />
               )}
             </AreaChart>
@@ -194,11 +262,16 @@ export default function BalanceChart({ loading }) {
                 tickLine={false}
                 tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip
+                content={<AnimatedTooltip />}
+                cursor={<CustomCursor />}
+              />
               <Bar
                 dataKey={activeMetric}
                 fill="url(#bar-gradient)"
                 radius={[6, 6, 0, 0]}
+                animationDuration={800}
+                animationEasing="ease-out"
               />
             </BarChart>
           )}

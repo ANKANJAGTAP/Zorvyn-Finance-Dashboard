@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 import Sidebar from './components/Sidebar'
 import Topbar from './components/Topbar'
 import Dashboard from './pages/Dashboard'
@@ -38,12 +39,15 @@ export default function App() {
       ...data,
       description: data.description || data.category,
     })
+    toast.success('Transaction added successfully', {
+      description: `₹${Number(data.amount).toLocaleString('en-IN')} — ${data.category}`,
+    })
   }
 
   const sidebarWidth = isMobile ? 0 : sidebarCollapsed ? 72 : 280
 
   return (
-    <div className="flex min-h-screen" style={{ background: 'var(--bg-main)' }}>
+    <div className="flex min-h-screen bg-bg-main">
       {/* Sidebar */}
       <Sidebar
         collapsed={sidebarCollapsed}
@@ -56,6 +60,7 @@ export default function App() {
         <div
           className="fixed inset-0 bg-black/50 z-20"
           onClick={() => setSidebarCollapsed(true)}
+          aria-hidden="true"
         />
       )}
 
@@ -72,7 +77,7 @@ export default function App() {
         />
 
         {/* Page Content */}
-        <main className="flex-1 p-4 md:p-6 overflow-auto">
+        <main className="flex-1 p-4 md:p-6 overflow-auto" role="main">
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />

@@ -15,14 +15,14 @@ This project focuses on **clean UI systems, scalable state management, and produ
 
 ## 🧠 Product Thinking
 
-Instead of building a “UI project”, this dashboard was designed as:
+Instead of building a "UI project", this dashboard was designed as:
 
 > **A simplified internal financial analytics tool**
 
 Key goals:
 
 * Reflect real-world financial workflows
-* Maintain visual consistency with Zorvyn’s design system
+* Maintain visual consistency with Zorvyn's design system
 * Ensure data → UI → insight flow is intuitive
 * Keep interactions lightweight but meaningful
 
@@ -33,19 +33,23 @@ Key goals:
 ### 📊 Dashboard
 
 * Financial summary (Balance, Income, Expenses, Savings Rate)
+* **Animated number counters** — values tick from 0 → actual amount on load
 * Time-based trend analysis (7D / 30D / 90D)
-* Category-wise spending breakdown
-* Recent transactions preview (with navigation)
+* Category-wise spending breakdown (interactive donut chart)
+* Recent transactions preview with empty state handling
+* **Progressive loading** — cards → charts → table with staggered reveal
 
 ---
 
 ### 📋 Transactions
 
-* Debounced search
-* Multi-filter (Type, Category)
-* Sorting (Date, Amount)
-* CRUD operations (Admin only)
-* Export CSV (exports filtered dataset)
+* Debounced search with instant UI sync
+* Multi-filter (Type, Category) with sort options
+* CRUD operations (Admin only) with **toast feedback**
+* **Undo delete** — toast with 5s undo window
+* **Mobile-responsive card layout** — stacked cards on small screens
+* Export CSV (exports filtered dataset) with success toast
+* Empty states for no data + no filter results
 
 ---
 
@@ -54,7 +58,9 @@ Key goals:
 * Highest spending category detection
 * Monthly comparison analysis
 * Savings rate calculation
-* AI-style financial summary (human-readable insights)
+* **AI-style financial summary** (human-readable insights)
+* **Smart alerts** — warns when a category exceeds 40% of spending
+* Zero-data empty state with CTA
 
 ---
 
@@ -65,47 +71,112 @@ Key goals:
 
 ---
 
+## 🔄 User Interaction Flows
+
+| Action | Flow |
+|--------|------|
+| Add Transaction | Modal → Toast ✅ → Dashboard updates → Chart animates |
+| Delete Transaction | Undo toast → Revert possible within 5s |
+| Edit Transaction | Modal → Toast ✅ → UI updates instantly |
+| Filter/Search | Instant UI + chart sync (no loading state) |
+| Export CSV | Toast ✅ with file name confirmation |
+
+---
+
 ## ⚙️ Architecture & State Design
 
 State is managed using **Zustand** with a clear separation:
 
 ### Core State
 
-* transactions
-* role
-* filters
+* transactions (persisted)
+* role (persisted)
+* filters (session only)
 * selectedMetric
+* timeFilter
 
-### Derived State
+### Derived State (Computed In-Store)
 
-* totalBalance
-* totalIncome
-* totalExpense
-* insights
+* totalBalance, totalIncome, totalExpense
+* filteredTransactions
+* categoryBreakdown
+* insights (AI summary data)
+* chartData (time-filtered, running balance)
 
 👉 Derived values are computed in-store, not in components — improving performance and separation of concerns.
+
+### State Strategy
+
+* `transactions` → global (Zustand, persisted)
+* `filters` → global (Zustand, not persisted)
+* `insights` → derived in-store via getters
+* Charts react to `timeFilter` + `transactions` (filtered state)
+* Components subscribe via specific selectors (not full store)
+
+---
+
+## 🧪 Edge Case Handling
+
+- Empty states handled across Dashboard, Transactions, and Insights
+- Loading states implemented using **shimmer skeleton UI** with progressive reveal
+- Role-based UI enforced at component level
+- Input validation for transaction creation:
+  - Prevents ₹0 and negative amounts
+  - Prevents future dates
+  - Max character limit on descriptions
+  - Inline error messages + toast on validation failure
+- Error states with retry buttons on data load failures
+- Undo pattern for destructive actions (delete)
+
+---
+
+## 🎯 Performance Optimizations
+
+- Memoized derived state (`useMemo` for totals computation)
+- Specific Zustand selectors to prevent unnecessary re-renders
+- `requestAnimationFrame`-based animated counters (60fps)
+- Progressive/staggered loading (300ms → 550ms → 750ms)
+- Framer Motion `AnimatePresence` for page transitions
+- Chart animations with 800ms ease-out curves
+
+---
+
+## ♿ Accessibility
+
+- `aria-label` on all interactive buttons and inputs
+- `aria-current="page"` on active navigation links
+- `role="dialog"` and `aria-modal` on modals
+- `role="radiogroup"` on toggle groups (type/category selectors)
+- `focus-visible` ring styling for keyboard users
+- Semantic HTML: `<nav>`, `<main>`, `<header>`, `<aside>`
+- Escape key to close modals
+- `aria-invalid` and `aria-describedby` for form validation errors
 
 ---
 
 ## 🎨 Design System
 
 * Dark-first theme inspired by Zorvyn
+* CSS custom properties for all design tokens (colors, spacing, radius)
 * Gradient accents (Indigo → Purple → Cyan → Emerald)
 * Glassmorphism UI (blur + subtle borders)
 * Consistent typography using Inter
-* Micro-interactions for feedback (hover, transitions)
+* **Reusable `<Button />` component** with variants (primary, secondary, ghost, danger)
+* **Reusable `<EmptyState />` component** with configurable presets
+* Micro-interactions: hover glow, tap scale, card elevation, tooltip animations
 
 ---
 
 ## 🧱 Tech Stack
 
-* React (Vite)
+* React 18 (Vite)
 * Tailwind CSS
-* Zustand
+* Zustand (persistent state)
 * React Router
 * Recharts
 * Framer Motion
 * Lucide React
+* **Sonner** (toast notifications)
 
 ---
 
@@ -115,14 +186,18 @@ State is managed using **Zustand** with a clear separation:
 * Chose **Zustand** for simplicity + scalability
 * Kept insights **independent from time filters** (reduces cognitive load)
 * CSV export reflects **current filtered state** (real-world behavior)
+* **Sonner over react-hot-toast** — modern API, built-in dark mode, undo pattern
+* **Shared `<Button />` component** — all buttons use consistent design system
+* **No inline styles policy** — Tailwind + CSS custom properties
+* **Progressive loading** — staggered reveal for premium feel
 
 ---
 
 ## ⚠️ Trade-offs
 
 * No backend (mock data used intentionally to focus on frontend architecture)
-* Limited validation (UI-first approach)
 * Dark mode only (aligned with design direction)
+* Some dynamic color styles use minimal inline CSS (category colors, gradient accents)
 
 ---
 
@@ -143,6 +218,7 @@ npm run dev
 * Authentication & user sessions
 * Real-time analytics
 * Light mode system
+* Lazy-loaded route splitting
 
 ---
 

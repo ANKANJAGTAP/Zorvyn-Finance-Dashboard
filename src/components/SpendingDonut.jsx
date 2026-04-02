@@ -1,20 +1,32 @@
 import { useState } from 'react'
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import { motion, AnimatePresence } from 'framer-motion'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import useStore from '../store/useStore'
 import { formatAmount } from '../utils/formatters'
 import { CATEGORY_COLORS } from '../data/mockData'
+import EmptyState from './EmptyState'
 
 const COLORS = ['#427CF0', '#855CD6', '#22C38E', '#EF4444', '#F59E0B']
 
-const CustomTooltip = ({ active, payload }) => {
-  if (!active || !payload?.length) return null
-  const data = payload[0]
-
+/* ─── Animated Tooltip ─── */
+const AnimatedTooltip = ({ active, payload }) => {
   return (
-    <div className="glass-card p-3" style={{ background: 'var(--bg-section)' }}>
-      <p className="text-white text-sm font-medium">{data.name}</p>
-      <p className="text-text-secondary text-xs">{formatAmount(data.value)} ({data.payload.percentage}%)</p>
-    </div>
+    <AnimatePresence>
+      {active && payload?.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 6, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 6, scale: 0.95 }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
+          className="chart-tooltip"
+        >
+          <p className="text-white text-sm font-medium">{payload[0].name}</p>
+          <p className="text-text-secondary text-xs">
+            {formatAmount(payload[0].value)} ({payload[0].payload.percentage}%)
+          </p>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
@@ -27,6 +39,8 @@ const CustomLegend = ({ payload, hiddenCategories, onToggle }) => {
           <button
             key={i}
             onClick={() => onToggle(entry.value)}
+            aria-label={`${isHidden ? 'Show' : 'Hide'} ${entry.value} category`}
+            aria-pressed={!isHidden}
             className={`flex items-center gap-2 text-xs px-2 py-1 rounded-md transition-all duration-200 hover:bg-white/5 ${
               isHidden ? 'opacity-40' : ''
             }`}
@@ -45,8 +59,8 @@ const CustomLegend = ({ payload, hiddenCategories, onToggle }) => {
 
 export default function SpendingDonut({ loading }) {
   const [hiddenCategories, setHiddenCategories] = useState([])
-  const timeFilter = useStore(s => s.timeFilter)
   const transactions = useStore(s => s.transactions)
+  const timeFilter = useStore(s => s.timeFilter) // Subscribe to trigger re-render on 7d/30d/90d change
   const getCategoryBreakdown = useStore(s => s.getCategoryBreakdown)
   const rawData = getCategoryBreakdown()
 
@@ -64,7 +78,21 @@ export default function SpendingDonut({ loading }) {
     return (
       <div className="glass-card p-5">
         <div className="skeleton h-5 w-40 mb-4" />
-        <div className="skeleton h-[250px] w-full rounded-full mx-auto" style={{ maxWidth: 250 }} />
+        <div className="skeleton h-[250px] w-[250px] rounded-full mx-auto" />
+      </div>
+    )
+  }
+
+  if (rawData.length === 0) {
+    return (
+      <div className="glass-card p-6">
+        <h3 className="text-white font-semibold mb-5">Spending Breakdown</h3>
+        <EmptyState
+          variant="no-data"
+          title="No expense data"
+          description="Add expense transactions to see your spending breakdown by category."
+          className="py-8"
+        />
       </div>
     )
   }
@@ -84,6 +112,8 @@ export default function SpendingDonut({ loading }) {
               outerRadius={95}
               paddingAngle={3}
               dataKey="value"
+              animationDuration={800}
+              animationEasing="ease-out"
             >
               {data.map((entry, i) => (
                 <Cell
@@ -93,7 +123,7 @@ export default function SpendingDonut({ loading }) {
                 />
               ))}
             </Pie>
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<AnimatedTooltip />} />
           </PieChart>
         </ResponsiveContainer>
       </div>

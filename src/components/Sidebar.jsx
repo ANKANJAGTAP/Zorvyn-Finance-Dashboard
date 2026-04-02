@@ -14,12 +14,12 @@ export default function Sidebar({ collapsed, onToggle, isMobile }) {
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen z-30 flex flex-col transition-all duration-300 ease-in-out border-r border-white/10 ${
+      className={`fixed left-0 top-0 h-screen z-30 flex flex-col transition-all duration-300 ease-in-out border-r border-white/10 bg-bg-section ${
         isMobile
           ? collapsed ? '-translate-x-full' : 'translate-x-0 w-[280px]'
           : collapsed ? 'w-[72px]' : 'w-[280px]'
       }`}
-      style={{ background: 'var(--bg-section)' }}
+      aria-label="Main navigation sidebar"
     >
       {/* Logo / Brand */}
       <div className={`flex items-center h-16 px-5 border-b border-white/10 ${collapsed && !isMobile ? 'justify-center' : 'gap-3'}`}>
@@ -32,7 +32,7 @@ export default function Sidebar({ collapsed, onToggle, isMobile }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-3 flex flex-col gap-1">
+      <nav className="flex-1 py-4 px-3 flex flex-col gap-1" aria-label="Main navigation">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = location.pathname === item.path
@@ -44,19 +44,22 @@ export default function Sidebar({ collapsed, onToggle, isMobile }) {
               key={item.path}
               to={item.path}
               className="group relative"
-              title={!showLabel ? item.label : undefined}
+              aria-label={!showLabel ? item.label : undefined}
+              aria-current={isActive ? 'page' : undefined}
             >
               <div
                 className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 min-h-[44px] ${
                   isActive
-                    ? 'bg-primary/15 text-white'
+                    ? 'bg-primary/15 text-white shadow-[0_0_15px_rgba(66,124,240,0.15)]'
                     : 'text-text-secondary hover:bg-white/5 hover:text-white'
                 }`}
-                style={isActive ? { boxShadow: '0 0 15px rgba(66, 124, 240, 0.15)' } : {}}
               >
                 {/* Active indicator — gradient bar */}
                 {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 rounded-r-full" style={{ background: 'linear-gradient(180deg, #427CF0, #22C38E)' }} />
+                  <div
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 rounded-r-full"
+                    style={{ background: 'linear-gradient(180deg, #427CF0, #22C38E)' }}
+                  />
                 )}
 
                 <Icon size={20} className={`flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
@@ -80,8 +83,9 @@ export default function Sidebar({ collapsed, onToggle, isMobile }) {
 
               {/* Tooltip when collapsed (desktop only) */}
               {!showLabel && (
-                <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
-                  style={{ background: 'var(--bg-section)', border: '1px solid rgba(255,255,255,0.1)' }}
+                <div
+                  className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 bg-bg-section border border-white/10"
+                  role="tooltip"
                 >
                   {item.label}
                 </div>
@@ -93,14 +97,16 @@ export default function Sidebar({ collapsed, onToggle, isMobile }) {
 
       {/* Bottom Section */}
       <div className="py-4 px-3 border-t border-white/10 flex flex-col gap-1">
-        <button className="flex items-center gap-3 px-3 py-3 rounded-lg text-text-secondary hover:bg-white/5 hover:text-white transition-all duration-200 min-h-[44px]"
-          title={!collapsed || isMobile ? undefined : 'Settings'}
+        <button
+          className="flex items-center gap-3 px-3 py-3 rounded-lg text-text-secondary hover:bg-white/5 hover:text-white transition-all duration-200 min-h-[44px]"
+          aria-label="Settings"
         >
           <Settings size={20} />
           {(!collapsed || isMobile) && <span className="text-sm">Settings</span>}
         </button>
-        <button className="flex items-center gap-3 px-3 py-3 rounded-lg text-text-secondary hover:bg-white/5 hover:text-white transition-all duration-200 min-h-[44px]"
-          title={!collapsed || isMobile ? undefined : 'Help'}
+        <button
+          className="flex items-center gap-3 px-3 py-3 rounded-lg text-text-secondary hover:bg-white/5 hover:text-white transition-all duration-200 min-h-[44px]"
+          aria-label="Help and support"
         >
           <HelpCircle size={20} />
           {(!collapsed || isMobile) && <span className="text-sm">Help</span>}
@@ -112,6 +118,7 @@ export default function Sidebar({ collapsed, onToggle, isMobile }) {
         <button
           onClick={onToggle}
           className="absolute -right-3 top-20 w-6 h-6 rounded-full border border-white/10 bg-bg-section flex items-center justify-center text-text-secondary hover:text-white hover:border-white/20 transition-all duration-200 z-40"
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>

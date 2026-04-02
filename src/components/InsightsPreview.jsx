@@ -2,6 +2,7 @@ import { TrendingUp, TrendingDown, PiggyBank } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore'
 import { formatAmount } from '../utils/formatters'
+import EmptyState from './EmptyState'
 
 export default function InsightsPreview({ loading }) {
   const navigate = useNavigate()
@@ -19,6 +20,9 @@ export default function InsightsPreview({ loading }) {
       </div>
     )
   }
+
+  // Check if we have ANY meaningful data
+  const hasAnyData = insights.topCategory || insights.currentIncome > 0 || insights.currentExpense > 0
 
   const previewCards = [
     {
@@ -57,36 +61,44 @@ export default function InsightsPreview({ loading }) {
         <button
           onClick={() => navigate('/insights')}
           className="text-primary text-sm font-medium hover:text-primary/80 transition-all duration-200"
+          aria-label="View all insights"
         >
           View All
         </button>
       </div>
 
-      <div className="space-y-3">
-        {previewCards.map((card, i) => {
-          const Icon = card.icon
-          return (
-            <div key={i} className="p-3 rounded-lg transition-all duration-200 hover:bg-white/[0.03]"
-              style={{ background: 'rgba(255,255,255,0.02)' }}
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'rgba(255,255,255,0.05)' }}
-                >
-                  <Icon size={16} className={card.color} />
-                </div>
-                <div>
-                  <p className="text-text-secondary text-xs mb-0.5">{card.title}</p>
-                  <p className={`text-sm font-semibold ${card.color}`}>{card.value}</p>
-                  {card.subtitle && (
-                    <p className="text-text-muted text-xs mt-0.5">{card.subtitle}</p>
-                  )}
+      {!hasAnyData ? (
+        <EmptyState
+          variant="no-data"
+          title="No insights available"
+          description="Add some transactions to unlock AI-powered financial insights."
+          actionLabel="+ Add Transaction"
+          onAction={() => navigate('/transactions')}
+          className="py-6"
+        />
+      ) : (
+        <div className="space-y-3">
+          {previewCards.map((card, i) => {
+            const Icon = card.icon
+            return (
+              <div key={i} className="p-3 rounded-lg transition-all duration-200 hover:bg-white/[0.03] bg-white/[0.02]">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.05]">
+                    <Icon size={16} className={card.color} />
+                  </div>
+                  <div>
+                    <p className="text-text-secondary text-xs mb-0.5">{card.title}</p>
+                    <p className={`text-sm font-semibold ${card.color}`}>{card.value}</p>
+                    {card.subtitle && (
+                      <p className="text-text-muted text-xs mt-0.5">{card.subtitle}</p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

@@ -13,12 +13,16 @@ const pageVariants = {
 }
 
 export default function Dashboard() {
-  const [loading, setLoading] = useState(true)
+  // Progressive loading: cards → charts → bottom row
+  const [cardsLoading, setCardsLoading] = useState(true)
+  const [chartsLoading, setChartsLoading] = useState(true)
+  const [bottomLoading, setBottomLoading] = useState(true)
 
-  // Simulate 500ms load delay for skeleton effect
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 500)
-    return () => clearTimeout(timer)
+    const t1 = setTimeout(() => setCardsLoading(false), 300)
+    const t2 = setTimeout(() => setChartsLoading(false), 550)
+    const t3 = setTimeout(() => setBottomLoading(false), 750)
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
   }, [])
 
   return (
@@ -27,7 +31,7 @@ export default function Dashboard() {
       initial="initial"
       animate="animate"
       exit="exit"
-      transition={{ duration: 0.2 }}
+      transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
       className="space-y-6"
     >
       {/* Page Header */}
@@ -36,22 +40,22 @@ export default function Dashboard() {
         <p className="text-text-secondary text-sm mt-1">Your financial overview at a glance</p>
       </div>
 
-      {/* Row 1: Summary Cards */}
-      <SummaryCards loading={loading} />
+      {/* Row 1: Summary Cards — loads first (300ms) */}
+      <SummaryCards loading={cardsLoading} />
 
-      {/* Row 2: Charts (50/50) */}
+      {/* Row 2: Charts (50/50) — loads second (550ms) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BalanceChart loading={loading} />
-        <SpendingDonut loading={loading} />
+        <BalanceChart loading={chartsLoading} />
+        <SpendingDonut loading={chartsLoading} />
       </div>
 
-      {/* Row 3: Split Row (60/40) */}
+      {/* Row 3: Split Row (60/40) — loads last (750ms) */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3">
-          <RecentTransactions loading={loading} />
+          <RecentTransactions loading={bottomLoading} />
         </div>
         <div className="lg:col-span-2">
-          <InsightsPreview loading={loading} />
+          <InsightsPreview loading={bottomLoading} />
         </div>
       </div>
     </motion.div>
