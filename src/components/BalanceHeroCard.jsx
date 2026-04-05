@@ -80,21 +80,21 @@ export default function BalanceHeroCard({ loading, onAddTransaction }) {
       whileHover={{ scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98 }}
       onClick={() => setSelectedMetric('balance')}
-      className={`relative overflow-hidden rounded-xl p-6 text-left cursor-pointer group border bg-gradient-to-br from-primary/[0.08] to-primary/[0.02] ${
-        isSelected ? 'border-white/20' : 'border-white/[0.06] hover:border-white/15'
+      className={`relative overflow-hidden rounded-xl p-6 text-left cursor-pointer group border bg-gradient-to-br from-primary/[0.08] to-primary/[0.02] transition-shadow duration-300 ${
+        isSelected ? 'border-[var(--card-border-hover)]' : 'border-[var(--card-border)] hover:border-[var(--card-border-hover)]'
       }`}
       style={{
         boxShadow: isSelected
-          ? `0 0 30px ${glowColor}, 0 8px 32px rgba(0,0,0,0.4)`
-          : '0 4px 20px rgba(0,0,0,0.2)',
+          ? `0 0 20px ${glowColor}, 0 8px 32px rgba(0,0,0,0.08)`
+          : '0 4px 15px rgba(0,0,0,0.03)',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = `0 0 35px ${glowColor}, 0 8px 32px rgba(0,0,0,0.35)`
+        e.currentTarget.style.boxShadow = `0 0 30px ${glowColor}, 0 12px 40px rgba(0,0,0,0.12)`
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.boxShadow = isSelected
-          ? `0 0 30px ${glowColor}, 0 8px 32px rgba(0,0,0,0.4)`
-          : '0 4px 20px rgba(0,0,0,0.2)'
+          ? `0 0 20px ${glowColor}, 0 8px 32px rgba(0,0,0,0.08)`
+          : '0 4px 15px rgba(0,0,0,0.03)'
       }}
     >
       {/* Gradient overlay */}
@@ -124,7 +124,7 @@ export default function BalanceHeroCard({ loading, onAddTransaction }) {
         </div>
 
         {/* Amount */}
-        <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
+        <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[rgb(var(--text-primary))] mb-2">
           <AnimatedCounter value={balance} isCurrency className="tabular-nums" />
         </p>
 

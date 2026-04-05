@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Download, User, Shield, Eye, Menu, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
@@ -9,6 +9,13 @@ import Button from './ui/Button'
 export default function Topbar({ onAddTransaction, onMenuClick, isMobile }) {
   const [hovered, setHovered] = useState(null)
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false)
+  const roleDropdownTimeoutRef = useRef(null)
+
+  useEffect(() => {
+    return () => {
+      if (roleDropdownTimeoutRef.current) clearTimeout(roleDropdownTimeoutRef.current)
+    }
+  }, [])
 
   const role = useStore(s => s.role)
   const setRole = useStore(s => s.setRole)
@@ -138,17 +145,28 @@ export default function Topbar({ onAddTransaction, onMenuClick, isMobile }) {
         <div className="hidden sm:block w-px h-6 bg-white/10 mx-1" />
 
         {/* Role Switch + Avatar */}
-        <div className="flex items-center gap-2">
+        <div 
+          className="flex items-center gap-2 relative z-[60]"
+          onMouseEnter={() => {
+            if (isMobile) return
+            if (roleDropdownTimeoutRef.current) clearTimeout(roleDropdownTimeoutRef.current)
+            setRoleDropdownOpen(true)
+          }}
+          onMouseLeave={() => {
+            if (isMobile) return
+            roleDropdownTimeoutRef.current = setTimeout(() => setRoleDropdownOpen(false), 150)
+          }}
+        >
           <div className="relative">
             <button
-              onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-              className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-2 rounded-lg hover:bg-white/5 transition-all duration-200 min-h-[44px]"
+              onClick={() => { if (isMobile) setRoleDropdownOpen(!roleDropdownOpen) }}
+              className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-transparent hover:border-white/[0.04] transition-all duration-200 min-h-[44px]"
               aria-label="Role selector"
             >
               {role === 'admin' ? (
-                <Shield size={16} className="text-primary" />
+                <Shield size={16} className="text-primary mt-0.5" />
               ) : (
-                <Eye size={16} className="text-text-secondary" />
+                <Eye size={16} className="text-text-secondary mt-0.5" />
               )}
               <span className="hidden md:block text-sm font-medium text-white">
                 {role === 'admin' ? 'Admin' : 'Viewer'}
@@ -158,29 +176,26 @@ export default function Topbar({ onAddTransaction, onMenuClick, isMobile }) {
             
             <AnimatePresence>
               {roleDropdownOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setRoleDropdownOpen(false)} />
-                  <motion.div
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 5 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-full mt-2 w-36 bg-[#1A1C23]/95 backdrop-blur-xl p-1 z-50 rounded-xl border border-white/[0.06] shadow-[0_8px_30px_rgb(0,0,0,0.5)]"
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="absolute right-0 top-full mt-2 w-40 bg-bg-card/90 backdrop-blur-xl p-2 z-[70] rounded-[20px] border border-white/[0.1] shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden"
+                >
+                  <button
+                    onClick={() => { setRole('admin'); setRoleDropdownOpen(false) }}
+                    className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-left transition-colors duration-200 ${role === 'admin' ? 'bg-primary/10 text-primary font-medium' : 'text-text-secondary hover:bg-white/[0.08] hover:text-white'}`}
                   >
-                    <button
-                      onClick={() => { setRole('admin'); setRoleDropdownOpen(false) }}
-                      className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-left transition-colors ${role === 'admin' ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-white/5 hover:text-white'}`}
-                    >
-                      <Shield size={14} className={role === 'admin' ? 'text-primary' : ''} /> Admin
-                    </button>
-                    <button
-                      onClick={() => { setRole('viewer'); setRoleDropdownOpen(false) }}
-                      className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-left transition-colors ${role === 'viewer' ? 'bg-white/10 text-white' : 'text-text-secondary hover:bg-white/5 hover:text-white'}`}
-                    >
-                      <Eye size={14} className={role === 'viewer' ? 'text-white' : ''} /> Viewer
-                    </button>
-                  </motion.div>
-                </>
+                    <Shield size={16} className={role === 'admin' ? 'text-primary' : ''} /> Admin
+                  </button>
+                  <button
+                    onClick={() => { setRole('viewer'); setRoleDropdownOpen(false) }}
+                    className={`flex items-center gap-3 w-full mt-1 px-3 py-2.5 rounded-xl text-sm text-left transition-colors duration-200 ${role === 'viewer' ? 'bg-white/[0.08] text-white font-medium' : 'text-text-secondary hover:bg-white/[0.08] hover:text-white'}`}
+                  >
+                    <Eye size={16} className={role === 'viewer' ? 'text-white' : ''} /> Viewer
+                  </button>
+                </motion.div>
               )}
             </AnimatePresence>
           </div>

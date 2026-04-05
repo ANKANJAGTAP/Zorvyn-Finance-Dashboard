@@ -1,4 +1,3 @@
-// components/Sidebar.jsx
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -12,7 +11,11 @@ import {
   ChevronLeft,
   LogOut,
   Bell,
+  Sun,
+  Moon,
+  Monitor
 } from 'lucide-react'
+import useStore from '../store/useStore'
 
 const mainNav = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
@@ -29,6 +32,8 @@ const secondaryNav = [
 export default function Sidebar({ collapsed, onToggle, isMobile }) {
   const [hovered, setHovered] = useState(null)
   const location = useLocation()
+  const theme = useStore(s => s.theme)
+  const setTheme = useStore(s => s.setTheme)
 
   const showLabels = !collapsed || isMobile
   const sidebarWidth = isMobile ? 280 : collapsed ? 72 : 280
@@ -160,7 +165,7 @@ export default function Sidebar({ collapsed, onToggle, isMobile }) {
       className={`
         fixed top-0 left-0 h-screen flex flex-col z-40
         border-r border-white/[0.06]
-        bg-bg-card
+        bg-bg-glass backdrop-blur-[14px]
         transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
         ${isMobile
           ? collapsed
@@ -212,6 +217,49 @@ export default function Sidebar({ collapsed, onToggle, isMobile }) {
           {secondaryNav.map(renderNavItem)}
         </ul>
       </nav>
+
+      {/* ═══════ Theme Segmented Toggle ═══════ */}
+      <AnimatePresence>
+        {showLabels && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex-shrink-0 border-t border-white/[0.04] px-3 pt-3"
+          >
+            <div className="flex bg-white/[0.03] p-1 rounded-xl border border-white/[0.04]">
+              {[
+                { id: 'light', icon: Sun },
+                { id: 'system', icon: Monitor },
+                { id: 'dark', icon: Moon }
+              ].map(({ id, icon: Icon }) => {
+                const active = theme === id
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setTheme(id)}
+                    className={`relative flex-1 flex items-center justify-center py-1.5 rounded-lg transition-colors duration-200 ${
+                      active ? 'text-[rgb(var(--text-primary))]' : 'text-text-muted hover:text-[rgb(var(--text-primary))] hover:bg-white/[0.02]'
+                    }`}
+                    aria-label={`Switch to ${id} theme`}
+                  >
+                    {active && (
+                      <motion.div
+                        layoutId="theme-active-pill"
+                        className="absolute inset-0 bg-bg-card rounded-lg shadow-sm border border-white/[0.08]"
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10">
+                      <Icon size={14} />
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ═══════ User Profile ═══════ */}
       <div className="flex-shrink-0 border-t border-white/[0.04] p-3">

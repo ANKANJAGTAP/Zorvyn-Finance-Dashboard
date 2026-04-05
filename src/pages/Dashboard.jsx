@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import BalanceHeroCard from '../components/BalanceHeroCard'
 import IncomeCard from '../components/IncomeCard'
 import ExpenseCard from '../components/ExpenseCard'
-import SavingsGauge from '../components/SavingsGauge'
-import BalanceChart from '../components/BalanceChart'
 import RecentTransactions from '../components/RecentTransactions'
 import InsightsPreview from '../components/InsightsPreview'
+
+// Lazy load heavy graphical (Recharts) components
+const BalanceChart = lazy(() => import('../components/BalanceChart'))
+const SavingsGauge = lazy(() => import('../components/SavingsGauge'))
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -43,7 +45,7 @@ export default function Dashboard({ onAddTransaction }) {
       </div>
 
       {/* Row 1: Hero Balance (40%) + Income (30%) + Expense (30%) */}
-      <div className="grid grid-cols-2 lg:grid-cols-[2fr_1.5fr_1.5fr] gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-[2fr_1.5fr_1.5fr] gap-6">
         <div className="col-span-2 lg:col-span-1">
           <BalanceHeroCard loading={cardsLoading} onAddTransaction={onAddTransaction} />
         </div>
@@ -53,8 +55,14 @@ export default function Dashboard({ onAddTransaction }) {
 
       {/* Row 2: Spending/Savings + Balance Chart + Insights */}
       <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1.5fr_1.4fr] gap-6">
-        <SavingsGauge loading={chartsLoading} />
-        <BalanceChart loading={chartsLoading} />
+        <Suspense fallback={<div className="glass-card p-6 min-h-[300px] flex items-center justify-center"><div className="skeleton w-32 h-32 rounded-full" /></div>}>
+          <SavingsGauge loading={chartsLoading} />
+        </Suspense>
+        
+        <Suspense fallback={<div className="glass-card p-6 min-h-[300px]"><div className="skeleton h-full w-full" /></div>}>
+          <BalanceChart loading={chartsLoading} />
+        </Suspense>
+        
         <InsightsPreview loading={chartsLoading} />
       </div>
 

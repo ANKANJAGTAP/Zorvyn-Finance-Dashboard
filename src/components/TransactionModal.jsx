@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import {
   X, ArrowDownLeft, ArrowUpRight,
   UtensilsCrossed, Car, ShoppingBag, Receipt, Gamepad2,
   Briefcase, Laptop, Calendar, FileText, IndianRupee,
-  Check, Sparkles
+  Check, Sparkles, Plus, Repeat
 } from 'lucide-react'
 import { CATEGORY_COLORS } from '../data/mockData'
 import Button from './ui/Button'
+import useFocusTrap from '../hooks/useFocusTrap'
 
 const CATEGORY_ICONS = {
   Food: UtensilsCrossed,
@@ -23,6 +24,20 @@ const CATEGORY_ICONS = {
 const EXPENSE_CATEGORIES = ['Food', 'Transport', 'Shopping', 'Bills', 'Entertainment']
 const INCOME_CATEGORIES = ['Salary', 'Freelance']
 
+const SMART_CATEGORIES = {
+  expense: {
+    'uber': 'Transport', 'ola': 'Transport', 'train': 'Transport', 'flight': 'Transport', 'fuel': 'Transport', 'taxi': 'Transport',
+    'zomato': 'Food', 'swiggy': 'Food', 'mcdonalds': 'Food', 'restaurant': 'Food', 'grocery': 'Food', 'coffee': 'Food',
+    'amazon': 'Shopping', 'myntra': 'Shopping', 'flipkart': 'Shopping', 'clothes': 'Shopping',
+    'netflix': 'Entertainment', 'movie': 'Entertainment', 'game': 'Entertainment', 'spotify': 'Entertainment',
+    'electricity': 'Bills', 'wifi': 'Bills', 'rent': 'Bills', 'phone': 'Bills'
+  },
+  income: {
+    'salary': 'Salary', 'bonus': 'Salary',
+    'freelance': 'Freelance', 'project': 'Freelance', 'upwork': 'Freelance'
+  }
+}
+
 export default function TransactionModal({ isOpen, onClose, onSubmit, editData }) {
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0, 10),
@@ -31,10 +46,21 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
     type: 'expense',
     description: '',
   })
+  const [displayAmount, setDisplayAmount] = useState('')
+  const [userSelectedCategory, setUserSelectedCategory] = useState(false)
+  const [customCategories, setCustomCategories] = useState({ expense: [], income: [] })
+  const [isAddingCategory, setIsAddingCategory] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [isRecurring, setIsRecurring] = useState(false)
+
   const [errors, setErrors] = useState({})
   const [submitAnim, setSubmitAnim] = useState(false)
   const amountRef = useRef(null)
+  const modalRef = useRef(null)
   const [shouldRender, setShouldRender] = useState(false)
+
+  // Trap focus when open
+  useFocusTrap(modalRef, isOpen)
 
   useEffect(() => {
     if (isOpen) setShouldRender(true)
@@ -53,6 +79,9 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
         type: editData.type,
         description: editData.description || '',
       })
+      setDisplayAmount(Number(editData.amount).toLocaleString('en-IN'))
+      setIsRecurring(editData.isRecurring || false)
+      setUserSelectedCategory(true)
     } else {
       setForm({
         date: new Date().toISOString().slice(0, 10),
@@ -61,9 +90,14 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
         type: 'expense',
         description: '',
       })
+      setDisplayAmount('')
+      setIsRecurring(false)
+      setUserSelectedCategory(false)
     }
     setErrors({})
     setSubmitAnim(false)
+    setIsAddingCategory(false)
+    setNewCategoryName('')
   }, [editData, isOpen])
 
   useEffect(() => {
@@ -81,7 +115,21 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose])
 
-  const validate = () => {
+  // Smart Default Categories
+  useEffect(() => {
+    if (!form.description || userSelectedCategory || editData) return
+    const lowerDesc = form.description.toLowerCase()
+    
+    const rules = SMART_CATEGORIES[form.type]
+    for (const [keyword, cat] of Object.entries(rules)) {
+      if (lowerDesc.includes(keyword)) {
+        setForm(f => ({ ...f, category: cat }))
+        break
+      }
+    }
+  }, [form.description, form.type, userSelectedCategory, editData])
+
+  const validate = (amountToValidate = form.amount) => {
     const newErrors = {}
     if (!form.date) {
       newErrors.date = 'Date is required'
@@ -91,10 +139,11 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
         newErrors.date = 'Future dates not allowed'
       }
     }
-    if (!form.amount || Number(form.amount) <= 0) {
+    const numAmount = Number(amountToValidate)
+    if (!amountToValidate || isNaN(numAmount) || numAmount <= 0) {
       newErrors.amount = 'Enter a valid amount (> ₹0)'
-    } else if (Number(form.amount) > 10000000) {
-      newErrors.amount = 'Amount exceeds maximum (₹1,00,00,000)'
+    } else if (numAmount > 10000000) {
+      newErrors.amount = 'Exceeds maximum (₹1,00,00,000)'
     }
     if (!form.category) newErrors.category = 'Pick a category'
 
@@ -108,13 +157,35 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!validate()) return
+
+    let currentAmount = form.amount
+    if (displayAmount) {
+      let rawStr = displayAmount.toString().replace(/,/g, '')
+      if (/[+\-*/]/.test(rawStr)) {
+        const calculated = evaluateMath(rawStr)
+        if (calculated) {
+          currentAmount = calculated.toString()
+          setForm(f => ({ ...f, amount: currentAmount }))
+          setDisplayAmount(Number(calculated).toLocaleString('en-IN'))
+        }
+      } else {
+        const num = Number(rawStr)
+        if (!isNaN(num) && num > 0) {
+          currentAmount = num.toString()
+          setForm(f => ({ ...f, amount: currentAmount }))
+          setDisplayAmount(num.toLocaleString('en-IN'))
+        }
+      }
+    }
+
+    if (!validate(currentAmount)) return
 
     setSubmitAnim(true)
     setTimeout(() => {
       onSubmit({
         ...form,
-        amount: Number(form.amount),
+        amount: Number(currentAmount),
+        isRecurring
       })
       setSubmitAnim(false)
       onClose()
@@ -124,18 +195,72 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
   const handleTypeSwitch = (type) => {
     const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES
     setForm(f => ({ ...f, type, category: categories[0] }))
+    setUserSelectedCategory(false)
   }
 
-  // Prevent negative input at HTML level
-  const handleAmountChange = (e) => {
-    const val = e.target.value
-    // Only allow positive numbers
-    if (val === '' || Number(val) >= 0) {
-      setForm(f => ({ ...f, amount: val }))
+  const evaluateMath = (expr) => {
+    try {
+      if (!/^[0-9+\-*/. ]+$/.test(expr)) return null
+      // eslint-disable-next-line no-new-func
+      const result = new Function('return ' + expr)()
+      if (isNaN(result) || result <= 0) return null
+      return result
+    } catch {
+      return null
     }
   }
 
-  const activeCategories = form.type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES
+  const handleAmountBlur = () => {
+    if (!displayAmount) return
+    
+    let rawStr = displayAmount.replace(/,/g, '')
+    if (/[+\-*/]/.test(rawStr)) {
+      const calculated = evaluateMath(rawStr)
+      if (calculated) {
+        setForm(f => ({ ...f, amount: calculated.toString() }))
+        setDisplayAmount(Number(calculated).toLocaleString('en-IN'))
+      } else {
+        setDisplayAmount(form.amount ? Number(form.amount).toLocaleString('en-IN') : '')
+      }
+    } else {
+      const num = Number(rawStr)
+      if (!isNaN(num) && num > 0) {
+        setForm(f => ({ ...f, amount: num.toString() }))
+        setDisplayAmount(num.toLocaleString('en-IN'))
+      }
+    }
+  }
+
+  const handleAmountChange = (e) => {
+    const val = e.target.value
+    setDisplayAmount(val)
+    
+    const stripped = val.replace(/,/g, '')
+    if (!/[+\-*/]/.test(stripped) && !isNaN(Number(stripped))) {
+      setForm(f => ({ ...f, amount: stripped }))
+    }
+  }
+
+  const handleAddCustomCategory = (e) => {
+    if (e.key === 'Enter' || e.type === 'blur') {
+      e.preventDefault()
+      if (newCategoryName.trim()) {
+        const catName = newCategoryName.trim()
+        setCustomCategories(prev => ({
+          ...prev,
+          [form.type]: [...new Set([...prev[form.type], catName])]
+        }))
+        setForm(f => ({ ...f, category: catName }))
+        setUserSelectedCategory(true)
+      }
+      setIsAddingCategory(false)
+      setNewCategoryName('')
+    }
+  }
+
+  const activeCategories = form.type === 'expense' 
+    ? [...EXPENSE_CATEGORIES, ...customCategories.expense]
+    : [...INCOME_CATEGORIES, ...customCategories.income]
 
   if (!shouldRender) return null
 
@@ -144,12 +269,13 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
 
   return (
     <motion.div
+      ref={modalRef}
       initial={{ opacity: 0 }}
       animate={{ opacity: isOpen ? 1 : 0 }}
       transition={{ duration: 0.25 }}
       onAnimationComplete={handleAnimationComplete}
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 sm:p-8"
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-4 sm:p-8"
       style={{
         background: 'radial-gradient(ellipse at center, rgba(66, 124, 240, 0.08), rgba(0,0,0,0.7))',
         backdropFilter: 'blur(8px)',
@@ -169,12 +295,7 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
         onClick={(e) => e.stopPropagation()}
       >
         <div
-          className="relative overflow-hidden rounded-2xl"
-          style={{
-            background: 'linear-gradient(145deg, rgba(20, 26, 42, 0.97), rgba(11, 17, 30, 0.98))',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(66, 124, 240, 0.08)',
-          }}
+          className="relative overflow-hidden rounded-2xl bg-bg-card border border-white/[0.08] shadow-[0_25px_60px_rgba(0,0,0,0.5),0_0_80px_rgba(66,124,240,0.08)]"
         >
           {/* Top accent line */}
           <div
@@ -209,7 +330,7 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
                   }
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-white">
+                  <h2 className="text-lg font-semibold text-[rgb(var(--text-primary))]">
                     {editData ? 'Edit Transaction' : 'New Transaction'}
                   </h2>
                   <p className="text-xs text-text-muted">
@@ -218,9 +339,10 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
                 </div>
               </div>
               <button
+                type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-white hover:bg-white/10 transition-all duration-200"
-                aria-label="Close modal"
+                aria-label="Close transaction modal"
+                className="p-2 -mr-2 text-text-muted hover:text-white bg-white/[0.04] hover:bg-white/[0.08] rounded-xl transition-all"
               >
                 <X size={16} />
               </button>
@@ -279,17 +401,16 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
                     <input
                       id="amount-input"
                       ref={amountRef}
-                      type="number"
-                      value={form.amount}
+                      type="text"
+                      inputMode="decimal"
+                      value={displayAmount}
                       onChange={handleAmountChange}
-                      placeholder="0.00"
-                      min="1"
-                      max="10000000"
-                      step="0.01"
+                      onBlur={handleAmountBlur}
+                      placeholder="e.g. 500 or 50*10"
                       required
                       aria-invalid={!!errors.amount}
                       aria-describedby={errors.amount ? 'amount-error' : undefined}
-                      className="flex-1 bg-transparent text-2xl font-bold text-white py-4 px-2 focus:outline-none placeholder:text-white/15 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      className="flex-1 bg-transparent text-2xl font-bold text-[rgb(var(--text-primary))] py-4 px-2 focus:outline-none placeholder:text-[rgba(var(--text-primary),0.15)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     />
                   </div>
                   <div
@@ -331,20 +452,20 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
                         type="button"
                         role="radio"
                         aria-checked={isSelected}
-                        onClick={() => setForm(f => ({ ...f, category: cat }))}
+                        onClick={() => { setForm(f => ({ ...f, category: cat })); setUserSelectedCategory(true); }}
                         className="relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl text-xs font-medium transition-all duration-200 group"
                         style={{
-                          background: isSelected ? `${catColor}12` : 'rgba(255, 255, 255, 0.03)',
+                          background: isSelected ? `${catColor}12` : 'rgb(var(--core-white) / 0.03)',
                           border: isSelected
                             ? `1px solid ${catColor}40`
-                            : '1px solid rgba(255, 255, 255, 0.06)',
+                            : '1px solid rgb(var(--core-white) / 0.06)',
                           color: isSelected ? catColor : 'var(--text-secondary)',
                         }}
                       >
                         <div
                           className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200"
                           style={{
-                            background: isSelected ? `${catColor}20` : 'rgba(255, 255, 255, 0.05)',
+                            background: isSelected ? `${catColor}20` : 'rgb(var(--core-white) / 0.05)',
                           }}
                         >
                           <Icon size={15} />
@@ -363,6 +484,42 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
                       </button>
                     )
                   })}
+
+                  {/* Add Custom Category Button */}
+                  {isAddingCategory ? (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="relative flex items-center py-3 px-2 rounded-xl"
+                      style={{ background: 'rgb(var(--core-white) / 0.05)', border: '1px solid rgb(var(--core-white) / 0.1)' }}
+                    >
+                      <input
+                        autoFocus
+                        type="text"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        onBlur={handleAddCustomCategory}
+                        onKeyDown={handleAddCustomCategory}
+                        placeholder="Name..."
+                        className="w-full bg-transparent text-xs text-[rgb(var(--text-primary))] text-center focus:outline-none"
+                      />
+                    </motion.div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingCategory(true)}
+                      className="relative flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl text-xs font-medium transition-all duration-200 hover:bg-white/[0.05]"
+                      style={{
+                        border: '1px dashed rgb(var(--core-white) / 0.15)',
+                        color: 'var(--text-secondary)',
+                      }}
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/[0.02]">
+                        <Plus size={15} />
+                      </div>
+                      Custom
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -390,7 +547,7 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
                         required
                         aria-invalid={!!errors.date}
                         aria-describedby={errors.date ? 'date-error' : undefined}
-                        className="flex-1 bg-transparent text-sm text-white py-3 px-2 focus:outline-none [color-scheme:dark]"
+                        className="flex-1 bg-transparent text-sm text-[rgb(var(--text-primary))] py-3 px-2 focus:outline-none [color-scheme:dark]"
                       />
                     </div>
                   </div>
@@ -423,7 +580,7 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
                         onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))}
                         placeholder="Add note..."
                         maxLength={50}
-                        className="flex-1 bg-transparent text-sm text-white py-3 px-2 focus:outline-none placeholder:text-white/20"
+                        className="flex-1 bg-transparent text-sm text-[rgb(var(--text-primary))] py-3 px-2 focus:outline-none placeholder:text-[rgba(var(--text-primary),0.2)]"
                       />
                     </div>
                   </div>
@@ -432,6 +589,34 @@ export default function TransactionModal({ isOpen, onClose, onSubmit, editData }
                       {form.description.length}/50
                     </p>
                   )}
+                </div>
+              </div>
+
+              {/* Recurring Toggle */}
+              <div 
+                className="flex items-center justify-between p-3 rounded-xl border border-white/[0.04] bg-white/[0.02] cursor-pointer hover:bg-white/[0.04] transition-colors"
+                onClick={() => setIsRecurring(!isRecurring)}
+                role="checkbox"
+                aria-checked={isRecurring}
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsRecurring(!isRecurring); } }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isRecurring ? 'bg-primary/20 text-primary' : 'bg-white/[0.05] text-text-muted'}`}>
+                    <Repeat size={15} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-[rgb(var(--text-primary))]">Recurring Transaction</p>
+                    <p className="text-[10px] text-text-muted">Automatically repeat next month</p>
+                  </div>
+                </div>
+                <div className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors duration-300 ${isRecurring ? 'bg-primary' : 'bg-[rgba(var(--core-white),0.1)]'}`}>
+                  <motion.div 
+                    className="w-4 h-4 bg-white rounded-full shadow-sm"
+                    layout
+                    animate={{ x: isRecurring ? 16 : 0 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
                 </div>
               </div>
 

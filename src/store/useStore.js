@@ -13,10 +13,17 @@ const useStore = create(
         category: 'all',
         search: '',
         sortBy: 'date',
+        startDate: '',
+        endDate: '',
       },
       role: 'admin',
       selectedMetric: 'balance',
       timeFilter: '30d',
+      theme: 'system',
+
+      // ─── Modal State ──────────────────────────────
+      isModalOpen: false,
+      editingTransaction: null,
 
       // ─── Derived Data (computed via getters) ──────
       getFilteredTransactions: () => {
@@ -37,9 +44,17 @@ const useStore = create(
           filtered = filtered.filter(t => t.type === filters.type)
         }
 
+        // Custom Date Range Filter
+        if (filters.startDate) {
+          if (new Date(t.date) < new Date(filters.startDate)) return false
+        }
+        if (filters.endDate) {
+          if (new Date(t.date) > new Date(filters.endDate)) return false
+        }
+
         // Category filter
         if (filters.category !== 'all') {
-          filtered = filtered.filter(t => t.category === filters.category)
+          filtered = filtered.filter(catT => catT.category === filters.category)
         }
 
         // Sort
@@ -64,10 +79,10 @@ const useStore = create(
         const { transactions } = get()
         const income = transactions
           .filter(t => t.type === 'income')
-          .reduce((sum, t) => sum + t.amount, 0)
+          .reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
         const expense = transactions
           .filter(t => t.type === 'expense')
-          .reduce((sum, t) => sum + t.amount, 0)
+          .reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
         const balance = income - expense
         const savingsRate = income > 0 ? ((income - expense) / income) * 100 : 0
 
@@ -95,10 +110,11 @@ const useStore = create(
           if (!dailyMap[t.date]) {
             dailyMap[t.date] = { date: t.date, income: 0, expense: 0, balance: 0 }
           }
+          const amt = Number(t.amount) || 0;
           if (t.type === 'income') {
-            dailyMap[t.date].income += t.amount
+            dailyMap[t.date].income += amt
           } else {
-            dailyMap[t.date].expense += t.amount
+            dailyMap[t.date].expense += amt
           }
         })
 
@@ -128,7 +144,7 @@ const useStore = create(
           if (!categoryMap[t.category]) {
             categoryMap[t.category] = 0
           }
-          categoryMap[t.category] += t.amount
+          categoryMap[t.category] += (Number(t.amount) || 0)
         })
 
         const total = Object.values(categoryMap).reduce((sum, v) => sum + v, 0)
@@ -150,7 +166,7 @@ const useStore = create(
           if (!categoryMap[t.category]) {
             categoryMap[t.category] = 0
           }
-          categoryMap[t.category] += t.amount
+          categoryMap[t.category] += (Number(t.amount) || 0)
         })
 
         const total = Object.values(categoryMap).reduce((sum, v) => sum + v, 0)
@@ -182,15 +198,15 @@ const useStore = create(
         )
 
         // Current period totals
-        const currentIncome = currentPeriod.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-        const currentExpense = currentPeriod.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
-        const prevExpense = prevPeriod.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
-        const prevIncome = prevPeriod.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+        const currentIncome = currentPeriod.filter(t => t.type === 'income').reduce((s, t) => s + (Number(t.amount) || 0), 0)
+        const currentExpense = currentPeriod.filter(t => t.type === 'expense').reduce((s, t) => s + (Number(t.amount) || 0), 0)
+        const prevExpense = prevPeriod.filter(t => t.type === 'expense').reduce((s, t) => s + (Number(t.amount) || 0), 0)
+        const prevIncome = prevPeriod.filter(t => t.type === 'income').reduce((s, t) => s + (Number(t.amount) || 0), 0)
 
         // Highest spending category
         const categoryTotals = {}
         currentPeriod.filter(t => t.type === 'expense').forEach(t => {
-          categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount
+          categoryTotals[t.category] = (categoryTotals[t.category] || 0) + (Number(t.amount) || 0)
         })
         const totalExpense = Object.values(categoryTotals).reduce((s, v) => s + v, 0)
         const topCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]
@@ -242,6 +258,18 @@ const useStore = create(
 
       deleteAllTransactions: () => set({ transactions: [] }),
 
+      bulkDeleteTransactions: (ids) =>
+        set(state => ({
+          transactions: state.transactions.filter(t => !ids.includes(t.id)),
+        })),
+
+      bulkUpdateCategory: (ids, category) =>
+        set(state => ({
+          transactions: state.transactions.map(t =>
+            ids.includes(t.id) ? { ...t, category } : t
+          ),
+        })),
+
       updateFilters: (newFilters) =>
         set(state => ({
           filters: { ...state.filters, ...newFilters },
@@ -252,12 +280,19 @@ const useStore = create(
       setSelectedMetric: (metric) => set({ selectedMetric: metric }),
 
       setTimeFilter: (timeFilter) => set({ timeFilter }),
+
+      setTheme: (theme) => set({ theme }),
+
+      openModal: (transaction = null) => set({ isModalOpen: true, editingTransaction: transaction }),
+      
+      closeModal: () => set({ isModalOpen: false, editingTransaction: null }),
     }),
     {
       name: 'finance-dashboard',
       partialize: (state) => ({
         transactions: state.transactions,
         role: state.role,
+        theme: state.theme,
       }),
     }
   )

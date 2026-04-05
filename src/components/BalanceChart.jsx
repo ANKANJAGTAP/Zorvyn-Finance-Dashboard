@@ -29,7 +29,7 @@ const AnimatedTooltip = ({ active, payload, label }) => {
                 />
                 <span className="text-xs text-text-secondary capitalize">{item.dataKey}</span>
               </div>
-              <span className="text-xs font-semibold text-white">{formatAmount(item.value)}</span>
+              <span className="text-xs font-semibold text-[rgb(var(--text-primary))]">{formatAmount(item.value)}</span>
             </div>
           ))}
         </motion.div>
@@ -101,7 +101,7 @@ export default function BalanceChart({ loading }) {
       <div className="glass-card p-6">
         <div className="error-state p-8 flex flex-col items-center justify-center text-center">
           <AlertCircle size={32} className="text-danger mb-3" />
-          <h3 className="text-white font-semibold mb-1">Failed to load chart</h3>
+          <h3 className="text-[rgb(var(--text-primary))] font-semibold mb-1">Failed to load chart</h3>
           <p className="text-text-muted text-sm mb-4">Something went wrong while rendering the chart data.</p>
           <Button
             variant="secondary"
@@ -120,7 +120,7 @@ export default function BalanceChart({ loading }) {
   if (formattedData.length === 0) {
     return (
       <div className="glass-card p-6">
-        <h3 className="text-white font-semibold mb-5">{config.label} Trend</h3>
+        <h3 className="text-[rgb(var(--text-primary))] font-semibold mb-5">{config.label} Trend</h3>
         <EmptyState
           variant="no-data"
           title="No chart data"
@@ -136,18 +136,18 @@ export default function BalanceChart({ loading }) {
   return (
     <motion.div
       whileHover={{ scale: 1.01, y: -2 }}
-      className="glass-card p-6 group"
-      style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}
+      className="glass-card p-6 group transition-shadow duration-300"
+      style={{ boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = `0 0 35px ${chartGlow}, 0 8px 32px rgba(0,0,0,0.35)`
+        e.currentTarget.style.boxShadow = `0 0 25px ${chartGlow}, 0 8px 25px rgba(0,0,0,0.08)`
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)'
+        e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.02)'
       }}
       transition={{ duration: 0.25 }}
     >
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-white font-semibold">
+        <h3 className="text-[rgb(var(--text-primary))] font-semibold">
           {config.label} Trend
         </h3>
 
@@ -156,7 +156,7 @@ export default function BalanceChart({ loading }) {
           <button
             onClick={() => setChartType('area')}
             className={`p-1.5 rounded-md transition-all duration-200 ${
-              chartType === 'area' ? 'bg-primary/20 text-primary' : 'text-text-muted hover:text-white'
+              chartType === 'area' ? 'bg-primary/20 text-primary' : 'text-text-muted hover:text-[rgb(var(--text-primary))]'
             }`}
             aria-label="Switch to area chart"
             aria-pressed={chartType === 'area'}
@@ -166,7 +166,7 @@ export default function BalanceChart({ loading }) {
           <button
             onClick={() => setChartType('bar')}
             className={`p-1.5 rounded-md transition-all duration-200 ${
-              chartType === 'bar' ? 'bg-primary/20 text-primary' : 'text-text-muted hover:text-white'
+              chartType === 'bar' ? 'bg-primary/20 text-primary' : 'text-text-muted hover:text-[rgb(var(--text-primary))]'
             }`}
             aria-label="Switch to bar chart"
             aria-pressed={chartType === 'bar'}
