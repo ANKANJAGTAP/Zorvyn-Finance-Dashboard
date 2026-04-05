@@ -131,8 +131,21 @@ export default function BalanceChart({ loading }) {
     )
   }
 
+  const chartGlow = 'rgba(66, 124, 240, 0.2)'
+
   return (
-    <div className="glass-card p-6">
+    <motion.div
+      whileHover={{ scale: 1.01, y: -2 }}
+      className="glass-card p-6 group"
+      style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = `0 0 35px ${chartGlow}, 0 8px 32px rgba(0,0,0,0.35)`
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)'
+      }}
+      transition={{ duration: 0.25 }}
+    >
       <div className="flex items-center justify-between mb-5">
         <h3 className="text-white font-semibold">
           {config.label} Trend
@@ -277,6 +290,6 @@ export default function BalanceChart({ loading }) {
           )}
         </ResponsiveContainer>
       </div>
-    </div>
+    </motion.div>
   )
 }

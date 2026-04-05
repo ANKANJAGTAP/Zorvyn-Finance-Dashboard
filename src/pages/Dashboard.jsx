@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import SummaryCards from '../components/SummaryCards'
+import BalanceHeroCard from '../components/BalanceHeroCard'
+import IncomeCard from '../components/IncomeCard'
+import ExpenseCard from '../components/ExpenseCard'
+import SavingsGauge from '../components/SavingsGauge'
 import BalanceChart from '../components/BalanceChart'
-import SpendingDonut from '../components/SpendingDonut'
 import RecentTransactions from '../components/RecentTransactions'
 import InsightsPreview from '../components/InsightsPreview'
 
@@ -12,7 +14,7 @@ const pageVariants = {
   exit: { opacity: 0, y: -20 },
 }
 
-export default function Dashboard() {
+export default function Dashboard({ onAddTransaction }) {
   // Progressive loading: cards → charts → bottom row
   const [cardsLoading, setCardsLoading] = useState(true)
   const [chartsLoading, setChartsLoading] = useState(true)
@@ -40,24 +42,24 @@ export default function Dashboard() {
         <p className="text-text-secondary text-sm mt-1">Your financial overview at a glance</p>
       </div>
 
-      {/* Row 1: Summary Cards — loads first (300ms) */}
-      <SummaryCards loading={cardsLoading} />
+      {/* Row 1: Hero Balance (40%) + Income (30%) + Expense (30%) */}
+      <div className="grid grid-cols-2 lg:grid-cols-[2fr_1.5fr_1.5fr] gap-4">
+        <div className="col-span-2 lg:col-span-1">
+          <BalanceHeroCard loading={cardsLoading} onAddTransaction={onAddTransaction} />
+        </div>
+        <IncomeCard loading={cardsLoading} />
+        <ExpenseCard loading={cardsLoading} />
+      </div>
 
-      {/* Row 2: Charts (50/50) — loads second (550ms) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Row 2: Spending/Savings + Balance Chart + Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1.5fr_1.4fr] gap-6">
+        <SavingsGauge loading={chartsLoading} />
         <BalanceChart loading={chartsLoading} />
-        <SpendingDonut loading={chartsLoading} />
+        <InsightsPreview loading={chartsLoading} />
       </div>
 
-      {/* Row 3: Split Row (60/40) — loads last (750ms) */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3">
-          <RecentTransactions loading={bottomLoading} />
-        </div>
-        <div className="lg:col-span-2">
-          <InsightsPreview loading={bottomLoading} />
-        </div>
-      </div>
+      {/* Row 3: Transactions (100%) */}
+      <RecentTransactions loading={bottomLoading} />
     </motion.div>
   )
 }

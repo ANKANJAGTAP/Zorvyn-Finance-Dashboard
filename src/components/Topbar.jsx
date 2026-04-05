@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Plus, Download, Bell, User, Shield, Eye, Menu } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Plus, Download, User, Shield, Eye, Menu, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import useStore from '../store/useStore'
 import { exportToCSV } from '../utils/formatters'
@@ -8,6 +8,7 @@ import Button from './ui/Button'
 
 export default function Topbar({ onAddTransaction, onMenuClick, isMobile }) {
   const [hovered, setHovered] = useState(null)
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false)
 
   const role = useStore(s => s.role)
   const setRole = useStore(s => s.setRole)
@@ -36,7 +37,7 @@ export default function Topbar({ onAddTransaction, onMenuClick, isMobile }) {
       className="sticky top-0 z-20 h-16 grid grid-cols-[1fr_auto_1fr] items-center px-4 md:px-6 gap-3 border-b border-white/10 bg-bg-glass backdrop-blur-[10px]"
       role="banner"
     >
-      {/* Left: Menu (mobile) + Add/Export */}
+      {/* Left: Menu (mobile only) */}
       <div className="flex items-center gap-2">
         {isMobile && (
           <button
@@ -47,31 +48,6 @@ export default function Topbar({ onAddTransaction, onMenuClick, isMobile }) {
             <Menu size={20} />
           </button>
         )}
-
-        {/* Add Transaction */}
-        <Button
-          variant="primary"
-          size="md"
-          onClick={onAddTransaction}
-          disabled={role !== 'admin'}
-          className="hidden sm:inline-flex"
-          aria-label={role !== 'admin' ? 'Switch to Admin to add transactions' : 'Add transaction'}
-        >
-          <Plus size={16} />
-          <span className="hidden lg:inline">Add Transaction</span>
-        </Button>
-
-        {/* Export */}
-        <Button
-          variant="ghost"
-          size="md"
-          onClick={handleExport}
-          className="hidden sm:inline-flex"
-          aria-label="Export transactions as CSV"
-        >
-          <Download size={16} />
-          <span className="hidden lg:inline">Export</span>
-        </Button>
       </div>
 
       {/* Center: Time Filter */}
@@ -131,32 +107,83 @@ export default function Topbar({ onAddTransaction, onMenuClick, isMobile }) {
         })}
       </div>
 
-      {/* Right: Bell + Role + Avatar */}
+      {/* Right: Actions + Bell + Role + Avatar */}
       <div className="flex items-center justify-end gap-2 md:gap-3">
-        {/* Notification Bell */}
-        <button
-          className="relative p-2 rounded-lg text-text-secondary hover:text-white hover:bg-white/5 transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
-          aria-label="Notifications — no new notifications"
+        {/* Add Transaction */}
+        <Button
+          variant="primary"
+          size="md"
+          onClick={onAddTransaction}
+          disabled={role !== 'admin'}
+          className="hidden sm:inline-flex"
+          aria-label={role !== 'admin' ? 'Switch to Admin to add transactions' : 'Add transaction'}
         >
-          <Bell size={18} />
-        </button>
+          <Plus size={16} />
+          <span className="hidden lg:inline">Add Transaction</span>
+        </Button>
+
+        {/* Export */}
+        <Button
+          variant="ghost"
+          size="md"
+          onClick={handleExport}
+          className="hidden sm:inline-flex text-white/60 hover:text-white/90"
+          aria-label="Export transactions as CSV"
+        >
+          <Download size={16} />
+          <span className="hidden lg:inline">Export</span>
+        </Button>
+
+        {/* Divider */}
+        <div className="hidden sm:block w-px h-6 bg-white/10 mx-1" />
 
         {/* Role Switch + Avatar */}
-        <div className="flex items-center gap-2 pl-2 md:pl-3 border-l border-white/10">
-          <button
-            onClick={() => setRole(role === 'admin' ? 'viewer' : 'admin')}
-            className="flex items-center gap-2 px-2 md:px-3 py-2 rounded-lg hover:bg-white/5 transition-all duration-200 min-h-[44px]"
-            aria-label={`Switch to ${role === 'admin' ? 'viewer' : 'admin'} role`}
-          >
-            {role === 'admin' ? (
-              <Shield size={16} className="text-primary" />
-            ) : (
-              <Eye size={16} className="text-text-secondary" />
-            )}
-            <span className="hidden md:block text-sm font-medium text-white">
-              {role === 'admin' ? 'Admin' : 'Viewer'}
-            </span>
-          </button>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <button
+              onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
+              className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-2 rounded-lg hover:bg-white/5 transition-all duration-200 min-h-[44px]"
+              aria-label="Role selector"
+            >
+              {role === 'admin' ? (
+                <Shield size={16} className="text-primary" />
+              ) : (
+                <Eye size={16} className="text-text-secondary" />
+              )}
+              <span className="hidden md:block text-sm font-medium text-white">
+                {role === 'admin' ? 'Admin' : 'Viewer'}
+              </span>
+              <ChevronDown size={14} className={`text-text-muted transition-transform duration-200 ${roleDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            <AnimatePresence>
+              {roleDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setRoleDropdownOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-full mt-2 w-36 bg-[#1A1C23]/95 backdrop-blur-xl p-1 z-50 rounded-xl border border-white/[0.06] shadow-[0_8px_30px_rgb(0,0,0,0.5)]"
+                  >
+                    <button
+                      onClick={() => { setRole('admin'); setRoleDropdownOpen(false) }}
+                      className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-left transition-colors ${role === 'admin' ? 'bg-primary/10 text-primary' : 'text-text-secondary hover:bg-white/5 hover:text-white'}`}
+                    >
+                      <Shield size={14} className={role === 'admin' ? 'text-primary' : ''} /> Admin
+                    </button>
+                    <button
+                      onClick={() => { setRole('viewer'); setRoleDropdownOpen(false) }}
+                      className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-left transition-colors ${role === 'viewer' ? 'bg-white/10 text-white' : 'text-text-secondary hover:bg-white/5 hover:text-white'}`}
+                    >
+                      <Eye size={14} className={role === 'viewer' ? 'text-white' : ''} /> Viewer
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Avatar */}
           <div className="hidden sm:flex items-center gap-2">

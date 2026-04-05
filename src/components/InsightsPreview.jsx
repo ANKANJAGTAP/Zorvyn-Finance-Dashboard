@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { TrendingUp, TrendingDown, PiggyBank } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore'
@@ -7,6 +8,7 @@ import EmptyState from './EmptyState'
 export default function InsightsPreview({ loading }) {
   const navigate = useNavigate()
   useStore(s => s.transactions) // Subscribe for reactivity
+  useStore(s => s.timeFilter) // Subscribe to time filter for reactivity
   const getInsights = useStore(s => s.getInsights)
   const insights = getInsights()
 
@@ -54,16 +56,29 @@ export default function InsightsPreview({ loading }) {
     },
   ]
 
+  const insightsGlow = 'rgba(66, 124, 240, 0.2)'
+
   return (
-    <div className="glass-card p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white font-semibold">Insights</h3>
+    <motion.div
+      whileHover={{ scale: 1.01, y: -2 }}
+      className="glass-card p-5 group"
+      style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = `0 0 35px ${insightsGlow}, 0 8px 32px rgba(0,0,0,0.35)`
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)'
+      }}
+      transition={{ duration: 0.25 }}
+    >
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-white font-semibold text-base">Insights</h3>
         <button
           onClick={() => navigate('/insights')}
-          className="text-primary text-sm font-medium hover:text-primary/80 transition-all duration-200"
+          className="text-primary text-xs font-semibold uppercase tracking-wider hover:text-primary/80 transition-all duration-200"
           aria-label="View all insights"
         >
-          View All
+          View All →
         </button>
       </div>
 
@@ -77,20 +92,20 @@ export default function InsightsPreview({ loading }) {
           className="py-6"
         />
       ) : (
-        <div className="space-y-3">
+        <div className="divide-y divide-white/[0.06]">
           {previewCards.map((card, i) => {
             const Icon = card.icon
             return (
-              <div key={i} className="p-3 rounded-lg transition-all duration-200 hover:bg-white/[0.03] bg-white/[0.02]">
+              <div key={i} className="py-3.5 first:pt-0 last:pb-0 px-1 transition-all duration-200 hover:bg-white/[0.02] rounded-lg">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.05]">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.05] border border-white/[0.06]">
                     <Icon size={16} className={card.color} />
                   </div>
-                  <div>
-                    <p className="text-text-secondary text-xs mb-0.5">{card.title}</p>
-                    <p className={`text-sm font-semibold ${card.color}`}>{card.value}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-text-secondary text-xs font-medium mb-0.5">{card.title}</p>
+                    <p className={`text-sm font-bold ${card.color}`}>{card.value}</p>
                     {card.subtitle && (
-                      <p className="text-text-muted text-xs mt-0.5">{card.subtitle}</p>
+                      <p className="text-text-muted text-[11px] mt-0.5">{card.subtitle}</p>
                     )}
                   </div>
                 </div>
@@ -99,6 +114,6 @@ export default function InsightsPreview({ loading }) {
           })}
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }

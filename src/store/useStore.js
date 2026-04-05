@@ -140,6 +140,31 @@ const useStore = create(
         }))
       },
 
+      getIncomeBreakdown: () => {
+        const { getTimeFilteredTransactions } = get()
+        const filtered = getTimeFilteredTransactions()
+        const incomes = filtered.filter(t => t.type === 'income')
+
+        const categoryMap = {}
+        incomes.forEach(t => {
+          if (!categoryMap[t.category]) {
+            categoryMap[t.category] = 0
+          }
+          categoryMap[t.category] += t.amount
+        })
+
+        const total = Object.values(categoryMap).reduce((sum, v) => sum + v, 0)
+
+        return Object.entries(categoryMap)
+          .map(([name, value]) => ({
+            name,
+            value,
+            percentage: total > 0 ? ((value / total) * 100).toFixed(1) : 0,
+          }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 2)
+      },
+
       getInsights: () => {
         const { transactions, timeFilter } = get()
         const now = new Date()
@@ -160,6 +185,7 @@ const useStore = create(
         const currentIncome = currentPeriod.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
         const currentExpense = currentPeriod.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
         const prevExpense = prevPeriod.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+        const prevIncome = prevPeriod.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
 
         // Highest spending category
         const categoryTotals = {}
@@ -188,6 +214,7 @@ const useStore = create(
           currentExpense,
           currentIncome,
           prevExpense,
+          prevIncome,
           hasEnoughData: prevPeriod.length > 0,
         }
       },
@@ -212,6 +239,8 @@ const useStore = create(
         set(state => ({
           transactions: state.transactions.filter(t => t.id !== id),
         })),
+
+      deleteAllTransactions: () => set({ transactions: [] }),
 
       updateFilters: (newFilters) =>
         set(state => ({

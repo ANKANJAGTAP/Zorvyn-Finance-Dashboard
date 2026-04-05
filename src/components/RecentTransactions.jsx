@@ -17,7 +17,7 @@ const iconMap = {
 export default function RecentTransactions({ loading }) {
   const navigate = useNavigate()
   const transactions = useStore(s => s.transactions)
-  const recent = transactions.slice(0, 5)
+  const recent = transactions.slice(0, 6)
 
   if (loading) {
     return (

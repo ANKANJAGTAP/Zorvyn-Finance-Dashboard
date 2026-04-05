@@ -17,14 +17,20 @@ const DESCRIPTIONS = {
 
 const STATUSES = ['completed', 'completed', 'completed', 'completed', 'pending'] // 80% completed, 20% pending
 
+let seed = 42
+function random() {
+  const x = Math.sin(seed++) * 10000
+  return x - Math.floor(x)
+}
+
 function randomBetween(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min
+  return Math.floor(random() * (max - min + 1)) + min
 }
 
 function randomDate(startDate, endDate) {
   const start = new Date(startDate).getTime()
   const end = new Date(endDate).getTime()
-  const randomTime = start + Math.random() * (end - start)
+  const randomTime = start + random() * (end - start)
   return new Date(randomTime).toISOString().slice(0, 10)
 }
 

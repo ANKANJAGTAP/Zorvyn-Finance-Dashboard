@@ -80,6 +80,8 @@ export default function Transactions() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const [hoveredDesktopTransactionId, setHoveredDesktopTransactionId] = useState(null)
+  const [hoveredMobileTransactionId, setHoveredMobileTransactionId] = useState(null)
 
   const role = useStore(s => s.role)
   const filters = useStore(s => s.filters)
@@ -89,6 +91,7 @@ export default function Transactions() {
   const addTransaction = useStore(s => s.addTransaction)
   const editTransaction = useStore(s => s.editTransaction)
   const deleteTransaction = useStore(s => s.deleteTransaction)
+  const deleteAllTransactions = useStore(s => s.deleteAllTransactions)
 
   const transactions = getFilteredTransactions()
   const isAdmin = role === 'admin'
@@ -169,6 +172,7 @@ export default function Transactions() {
       editTransaction(editingTransaction.id, {
         ...data,
         description: data.description || data.category,
+        amount: Number(data.amount), // Explicit conversion to ensure numeric type
       })
       setEditingTransaction(null)
       toast.success('Transaction updated', {
@@ -358,15 +362,38 @@ export default function Transactions() {
             )}
           </p>
         </div>
-        <Button
-          variant="primary"
-          onClick={openAddModal}
-          disabled={!isAdmin}
-          aria-label={!isAdmin ? 'Switch to Admin to add transactions' : 'Add new transaction'}
-        >
-          <Plus size={16} />
-          Add Transaction
-        </Button>
+        <div className="flex gap-2 sm:gap-3">
+          {transactions.length > 0 && (
+            <button
+              onClick={() => {
+                if (window.confirm("Are you sure you want to delete ALL transactions? This action cannot be undone.")) {
+                  deleteAllTransactions()
+                  toast.success('All transactions deleted')
+                }
+              }}
+              disabled={!isAdmin}
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border ${
+                isAdmin
+                  ? 'border-danger/30 bg-danger/10 text-danger hover:bg-danger/20'
+                  : 'border-white/[0.06] bg-white/[0.04] text-text-muted/50 cursor-not-allowed'
+              }`}
+              aria-label={!isAdmin ? 'Switch to Admin to delete all transactions' : 'Delete all transactions'}
+            >
+              <Trash2 size={16} />
+              <span className="hidden sm:inline">Delete All</span>
+            </button>
+          )}
+          <Button
+            variant="primary"
+            onClick={openAddModal}
+            disabled={!isAdmin}
+            aria-label={!isAdmin ? 'Switch to Admin to add transactions' : 'Add new transaction'}
+          >
+            <Plus size={16} />
+            <span className="hidden sm:inline">Add Transaction</span>
+            <span className="sm:hidden">Add</span>
+          </Button>
+        </div>
       </div>
 
       {/* ─── Filter Bar ─── */}
@@ -482,9 +509,12 @@ export default function Transactions() {
       ) : (
         <>
           {/* ─── Desktop Table ─── */}
-          <div className="glass-card overflow-hidden hidden md:block rounded-xl border border-white/[0.06]">
+          <div
+            className="glass-card hidden md:block rounded-xl border border-white/[0.06]"
+            onMouseLeave={() => setHoveredDesktopTransactionId(null)}
+          >
             {/* Table Header */}
-            <div className="grid grid-cols-12 gap-4 px-6 py-3.5 border-b border-white/[0.08] bg-white/[0.02] text-text-muted text-[11px] font-semibold uppercase tracking-[0.08em]">
+            <div className="sticky top-0 z-10 grid grid-cols-12 gap-4 px-6 py-3.5 border-b border-white/[0.08] bg-bg-section/80 backdrop-blur-md text-text-muted text-[11px] font-semibold uppercase tracking-[0.08em]">
               <div className="col-span-1"></div>
               <div className="col-span-3">Description</div>
               <div className="col-span-2">Category</div>
@@ -510,8 +540,24 @@ export default function Transactions() {
                     animate="visible"
                     exit={{ opacity: 0, x: -20 }}
                     layout
-                    className="group relative grid grid-cols-12 gap-4 items-center px-6 py-4 border-b border-white/[0.04] last:border-0 hover:bg-white/[0.03] transition-colors duration-150"
+                    className="group relative grid grid-cols-12 gap-4 items-center px-6 py-4 border-b border-white/[0.04] last:border-0 transition-colors duration-150"
+                    onMouseEnter={() => setHoveredDesktopTransactionId(transaction.id)}
                   >
+                    {/* Sidebar-style sliding hover bg */}
+                    {hoveredDesktopTransactionId === transaction.id && (
+                      <motion.span
+                        layoutId="transactions-hover-bg-desktop"
+                        className="absolute inset-0 rounded-xl bg-white/[0.05] pointer-events-none"
+                        style={{ originX: 0.5, originY: 0.5 }}
+                        transition={{
+                          type: 'spring',
+                          stiffness: 350,
+                          damping: 25,
+                          mass: 0.8,
+                        }}
+                      />
+                    )}
+
                     {/* Left accent line on hover */}
                     <motion.div 
                       className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-full origin-center"
@@ -607,7 +653,7 @@ export default function Transactions() {
           </div>
 
           {/* ─── Mobile Card Layout ─── */}
-          <div className="md:hidden space-y-3">
+          <div className="md:hidden space-y-3" onMouseLeave={() => setHoveredMobileTransactionId(null)}>
             <AnimatePresence mode="popLayout">
               {paginatedTransactions.map((transaction, i) => {
                 const Icon = iconMap[transaction.category] || Receipt
@@ -623,9 +669,24 @@ export default function Transactions() {
                     animate="visible"
                     exit={{ opacity: 0, y: -20 }}
                     layout
+                    onMouseEnter={() => setHoveredMobileTransactionId(transaction.id)}
                   >
                     <ZCard glowColor={glow} className="border border-white/[0.06]">
-                      <div className="p-4">
+                      <div className="relative p-4">
+                        {hoveredMobileTransactionId === transaction.id && (
+                          <motion.span
+                            layoutId="transactions-hover-bg-mobile"
+                            className="absolute inset-0 rounded-xl bg-white/[0.05] pointer-events-none"
+                            style={{ originX: 0.5, originY: 0.5 }}
+                            transition={{
+                              type: 'spring',
+                              stiffness: 350,
+                              damping: 25,
+                              mass: 0.8,
+                            }}
+                          />
+                        )}
+
                         <div className="flex items-start gap-3">
                           {/* Icon + Status */}
                           <div className="relative flex-shrink-0">
