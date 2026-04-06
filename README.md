@@ -1,52 +1,122 @@
 # Zorvyn Finance Dashboard
-> A premium, highly-interactive financial analytics dashboard engineered for production-level performant web applications.
 
-![Dashboard Preview](https://via.placeholder.com/1200x630?text=Zorvyn+Finance+Dashboard)
+A responsive financial analytics dashboard built to demonstrate frontend engineering maturity, focusing on UI systems, performance, and real-world UX patterns.
 
-## 🎯 Overview
-Zorvyn Finance is a production-grade, state-of-the-art dashboard built to evaluate frontend engineering maturity. The application prioritizes micro-interactive polish, deep glassmorphism aesthetics, accessibility (a11y), and zero-layout-shift data visualization.
+**Live Demo:** https://zorvyn-finance-dashboard-ui.vercel.app/dashboard  
+**Repository:** https://github.com/ANKANJAGTAP/Zorvyn-Finance-Dashboard-UI
 
-*“In a production environment, server state would be managed using TanStack Query and real-time updates via WebSockets.”*
+---
 
-## ✨ Key Features
-- **Intelligent Analytics:** Dynamic Recharts integration for Expense/Income visualization spanning multiple timeframes (7D, 30D, 90D).
-- **Premium Glassmorphism:** Custom Tailwind-engineered glass panes mapped directly onto raw RGB primitives.
-- **Micro-Interactions Driven by Framer Motion:** Fluid layout animations, scale-in modals, and hover dynamics perfectly synced at 150-300ms intervals.
-- **Enterprise-Grade Mobile UX:** Fully responsive bottom-sheet filter drawers, complete with drag-handle aesthetics and robust keyboard focus-trapping.
-- **Native Light/Dark Inversion Engine:** CSS variable-based token system orchestrating flawless dynamic backgrounds depending on system theme preference.
+## Overview
 
-## 🛠️ Tech Stack
-- **Framework:** React.js (Vite)
-- **Styling:** Tailwind CSS + Vanilla CSS Variables
-- **Animations:** Framer Motion
-- **State Management:** Zustand
-- **Charting Engine:** Recharts
-- **Icons:** Lucide React
-- **Notifications:** Sonner
+This project simulates a production-style finance dashboard used to track transactions, analyze spending patterns, and generate insights.
 
-## 🧠 Core Engineering & Design Decisions
-1. **Performance via Sub-Chunking:** Heavy layout engines (`Recharts`, `Framer Motion`) and individual App Routes are natively chunked using React `lazy()` + `Suspense` to guarantee instantaneous Time-to-Interactive (TTI).
-2. **Focus-Trapping (A11y):** Modals and drawers utilize a custom lightweight `useFocusTrap` hook to strictly encapsulate keyboard loops (Tab/Shift+Tab) ensuring screen-readers and visual impaired users are never trapped behind a backdrop.
-3. **Skeleton Shimmer Engine:** Skeleton loading blocks strictly match the dimensions of their final loaded counterparts to eliminate Cumulative Layout Shift (CLS).
-4. **CSS Primitive Variables:** Used `rgb(var(--primary) / alpha)` over static hex codes allowing instant theme resolution without re-rendering React components globally.
+**Focus Areas:**
+- Clean UI architecture  
+- Scalable state management  
+- Consistent data-driven rendering  
+- Responsive and accessible user experience  
 
-## 🚀 Getting Started
+In a production environment, server state would be managed using TanStack Query and real-time updates via WebSockets.
 
-### Prerequisites
-Make sure you have Node JS (v18+) installed.
+---
 
-### Installation
-1. Install standard dependencies:
-   ```bash
-   npm install
-   ```
+## Why This Project Stands Out
 
-2. Spin up the Vite development server:
-   ```bash
-   npm run dev
-   ```
+- Designed with product-level thinking, not just UI implementation  
+- Strong emphasis on data consistency across all components  
+- Performance-aware architecture using lazy loading and skeleton states  
+- Accessibility considerations including focus trapping and keyboard navigation  
+- Clean separation of concerns using Zustand for predictable state flow  
+- Mobile-first responsiveness with adaptive data formatting  
 
-3. View in browser at [http://localhost:5173/](http://localhost:5173/)
+---
 
-## 📝 License
-Proprietary / Built as an engineering assessment.
+## Features
+
+### Dashboard
+- Financial summary (Balance, Income, Expenses, Savings Rate)  
+- Time-based trend analysis (7D, 30D, 90D)  
+- Category-wise spending visualization  
+- Insights with human-readable summaries  
+
+### Transactions
+- Search, filter, and sorting  
+- Add, edit, and delete transactions (Admin mode)  
+- Bulk selection with action bar  
+- "Delete All" action included for testing data consistency across the application  
+
+### Insights
+- Highest spending category detection  
+- Monthly comparison  
+- Savings rate calculation  
+- AI-style summary for quick understanding  
+
+---
+
+## Engineering Highlights
+
+- Lazy loading and code splitting for improved performance  
+- Skeleton loading to prevent layout shifts  
+- Focus trapping and keyboard accessibility for modals and drawers  
+- Consistent currency and data formatting across the application  
+- Mobile-first responsive design with optimized layouts for smaller screens  
+
+---
+
+## Tech Stack
+
+- React (Vite)  
+- Tailwind CSS + CSS Variables  
+- Zustand (state management)  
+- Recharts (data visualization)  
+- Framer Motion (animations)  
+- Lucide React (icons)  
+- Sonner (notifications)  
+
+---
+
+## Responsiveness
+
+The application is fully responsive and optimized for:
+
+- Desktop  
+- Tablet  
+- Mobile devices  
+
+UI components adapt layout, spacing, and data formatting for smaller screens.
+
+---
+
+## Getting Started
+
+```bash
+npm install
+npm run dev
+```
+
+---
+
+## Related Work
+
+**Outfyld (Full-Stack Product)**  
+A production-grade sports booking platform focused on real-world reservation workflows and scalability.  
+https://www.outfyld.in/
+
+**Portfolio**  
+A collection of projects showcasing frontend systems, UI/UX design, and full-stack development work.  
+https://ankan-portfolio-smoky.vercel.app/
+
+---
+
+## Notes
+
+- This project uses mock data for all transactions and analytics.  
+- The "Delete All" functionality is intentionally included to validate data consistency and UI updates across the application.  
+- No backend integration is included, as the focus is on frontend architecture, UI systems, and interaction design.  
+
+---
+
+## License
+
+Proprietary. This project was developed as part of an engineering assessment.
