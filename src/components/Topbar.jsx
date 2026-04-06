@@ -10,10 +10,23 @@ export default function Topbar({ onAddTransaction, onMenuClick, isMobile }) {
   const [hovered, setHovered] = useState(null)
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false)
   const roleDropdownTimeoutRef = useRef(null)
+  const dropdownRef = useRef(null)
 
   useEffect(() => {
     return () => {
       if (roleDropdownTimeoutRef.current) clearTimeout(roleDropdownTimeoutRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setRoleDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
 
@@ -157,7 +170,7 @@ export default function Topbar({ onAddTransaction, onMenuClick, isMobile }) {
             roleDropdownTimeoutRef.current = setTimeout(() => setRoleDropdownOpen(false), 150)
           }}
         >
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => { if (isMobile) setRoleDropdownOpen(!roleDropdownOpen) }}
               className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-transparent hover:border-white/[0.04] transition-all duration-200 min-h-[44px]"

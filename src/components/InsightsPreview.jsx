@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { TrendingUp, TrendingDown, PiggyBank } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -6,6 +7,7 @@ import { formatAmount } from '../utils/formatters'
 import EmptyState from './EmptyState'
 
 export default function InsightsPreview({ loading }) {
+  const [hoveredIndex, setHoveredIndex] = useState(null)
   const navigate = useNavigate()
   useStore(s => s.transactions) // Subscribe for reactivity
   useStore(s => s.timeFilter) // Subscribe to time filter for reactivity
@@ -92,22 +94,44 @@ export default function InsightsPreview({ loading }) {
           className="py-6"
         />
       ) : (
-        <div className="divide-y divide-white/[0.06]">
+        <div 
+          className="space-y-0"
+          onMouseLeave={() => setHoveredIndex(null)}
+        >
           {previewCards.map((card, i) => {
             const Icon = card.icon
+            const isHov = hoveredIndex === i
+
             return (
-              <div key={i} className="py-3.5 first:pt-0 last:pb-0 px-1 transition-all duration-200 hover:bg-white/[0.02] rounded-lg">
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.05] border border-white/[0.06]">
-                    <Icon size={16} className={card.color} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-text-secondary text-xs font-medium mb-0.5">{card.title}</p>
-                    <p className={`text-sm font-bold ${card.color}`}>{card.value}</p>
-                    {card.subtitle && (
-                      <p className="text-text-muted text-[11px] mt-0.5">{card.subtitle}</p>
-                    )}
-                  </div>
+              <div 
+                key={i} 
+                onMouseEnter={() => setHoveredIndex(i)}
+                className="relative py-3 flex items-start gap-3 border-b border-white/[0.06] last:border-0 px-2 -mx-2 transition-all duration-200 rounded-lg"
+              >
+                {/* ─── Aceternity-style sliding hover bg ─── */}
+                {isHov && (
+                  <motion.span
+                    layoutId="insights-hover-bg"
+                    className="absolute inset-0 rounded-lg bg-white/[0.05]"
+                    style={{ originX: 0.5, originY: 0.5 }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 350,
+                      damping: 25,
+                      mass: 0.8,
+                    }}
+                  />
+                )}
+                
+                <div className="relative z-10 w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.05] border border-white/[0.06]">
+                  <Icon size={16} className={card.color} />
+                </div>
+                <div className="relative z-10 flex-1 min-w-0">
+                  <p className="text-text-secondary text-xs font-medium mb-0.5">{card.title}</p>
+                  <p className={`text-sm font-bold ${card.color}`}>{card.value}</p>
+                  {card.subtitle && (
+                    <p className="text-text-muted text-[11px] mt-0.5">{card.subtitle}</p>
+                  )}
                 </div>
               </div>
             )

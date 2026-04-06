@@ -193,7 +193,7 @@ export default function Sidebar({ collapsed, onToggle, isMobile }) {
               <span className="text-[15px] font-bold text-white tracking-tight leading-tight">
                 Zorvyn
               </span>
-              <span className="text-[10px] text-text-muted font-semibold tracking-widest uppercase">
+              <span className="text-[10px] text-text-secondary font-bold tracking-widest uppercase">
                 Finance
               </span>
             </motion.div>
@@ -225,9 +225,9 @@ export default function Sidebar({ collapsed, onToggle, isMobile }) {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="flex-shrink-0 border-t border-white/[0.04] px-3 pt-3"
+            className="flex-shrink-0 border-t border-white/[0.04] px-3 py-3"
           >
-            <div className="flex bg-white/[0.03] p-1 rounded-xl border border-white/[0.04]">
+            <div className="flex bg-white/[0.06] p-1 rounded-xl border border-white/[0.08]">
               {[
                 { id: 'light', icon: Sun },
                 { id: 'system', icon: Monitor },
@@ -239,14 +239,14 @@ export default function Sidebar({ collapsed, onToggle, isMobile }) {
                     key={id}
                     onClick={() => setTheme(id)}
                     className={`relative flex-1 flex items-center justify-center py-1.5 rounded-lg transition-colors duration-200 ${
-                      active ? 'text-[rgb(var(--text-primary))]' : 'text-text-muted hover:text-[rgb(var(--text-primary))] hover:bg-white/[0.02]'
+                      active ? 'text-[rgb(var(--text-primary))]' : 'text-text-secondary hover:text-[rgb(var(--text-primary))] hover:bg-white/[0.06]'
                     }`}
                     aria-label={`Switch to ${id} theme`}
                   >
                     {active && (
                       <motion.div
                         layoutId="theme-active-pill"
-                        className="absolute inset-0 bg-bg-card rounded-lg shadow-sm border border-white/[0.08]"
+                        className="absolute inset-0 bg-bg-card rounded-lg shadow-md border border-white/[0.12]"
                         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                       />
                     )}
@@ -289,7 +289,7 @@ export default function Sidebar({ collapsed, onToggle, isMobile }) {
                 <p className="text-[13px] font-medium text-white truncate leading-tight">
                   John Doe
                 </p>
-                <p className="text-[11px] text-text-muted truncate leading-tight mt-0.5">
+                <p className="text-[11px] text-text-secondary font-medium truncate leading-tight mt-0.5">
                   john@zorvyn.com
                 </p>
               </motion.div>
@@ -298,7 +298,7 @@ export default function Sidebar({ collapsed, onToggle, isMobile }) {
 
           {showLabels && (
             <div className="flex-shrink-0 p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors">
-              <LogOut size={14} className="text-text-muted hover:text-text-secondary transition-colors" />
+              <LogOut size={14} className="text-text-secondary hover:text-[rgb(var(--text-primary))] transition-colors" />
             </div>
           )}
         </div>
@@ -328,7 +328,7 @@ export default function Sidebar({ collapsed, onToggle, isMobile }) {
             <ChevronLeft
               size={12}
               strokeWidth={2.5}
-              className="text-text-muted group-hover/toggle:text-white transition-colors"
+              className="text-text-secondary group-hover/toggle:text-[rgb(var(--text-primary))] transition-colors"
             />
           </motion.span>
         </button>

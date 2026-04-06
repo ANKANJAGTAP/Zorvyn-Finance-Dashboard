@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, UtensilsCrossed, Car, ShoppingBag, Receipt, Gamepad2, Briefcase, Laptop } from 'lucide-react'
 import useStore from '../store/useStore'
@@ -15,6 +17,7 @@ const iconMap = {
 }
 
 export default function RecentTransactions({ loading }) {
+  const [hoveredId, setHoveredId] = useState(null)
   const navigate = useNavigate()
   const transactions = useStore(s => s.transactions)
   const recent = transactions.slice(0, 6)
@@ -64,32 +67,52 @@ export default function RecentTransactions({ loading }) {
           className="py-8"
         />
       ) : (
-        <div className="space-y-0">
+        <div 
+          className="space-y-0"
+          onMouseLeave={() => setHoveredId(null)}
+        >
           {recent.map(transaction => {
             const Icon = iconMap[transaction.category] || Receipt
             const isIncome = transaction.type === 'income'
+            const isHov = hoveredId === transaction.id
 
             return (
               <div
                 key={transaction.id}
-                className="flex items-center gap-3 py-3 border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-all duration-200 -mx-2 px-2 rounded-lg"
+                onMouseEnter={() => setHoveredId(transaction.id)}
+                className="relative flex items-center gap-3 py-3 border-b border-white/5 last:border-0 transition-all duration-200 -mx-2 px-2 rounded-lg"
               >
+                {/* ─── Aceternity-style sliding hover bg ─── */}
+                {isHov && (
+                  <motion.span
+                    layoutId="transactions-hover-bg"
+                    className="absolute inset-0 rounded-lg bg-white/[0.05]"
+                    style={{ originX: 0.5, originY: 0.5 }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 350,
+                      damping: 25,
+                      mass: 0.8,
+                    }}
+                  />
+                )}
+
                 {/* Status Dot */}
-                <div className={`status-dot ${transaction.status === 'completed' ? 'status-dot--completed' : 'status-dot--pending'}`} />
+                <div className={`relative z-10 status-dot ${transaction.status === 'completed' ? 'status-dot--completed' : 'status-dot--pending'}`} />
 
                 {/* Category Icon */}
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.05]">
+                <div className="relative z-10 w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/[0.05]">
                   <Icon size={16} className="text-text-secondary" />
                 </div>
 
                 {/* Description + Category */}
-                <div className="flex-1 min-w-0">
+                <div className="relative z-10 flex-1 min-w-0">
                   <p className="text-sm text-white font-medium truncate">{transaction.description}</p>
                   <p className="text-xs text-text-muted">{transaction.category} · {formatDate(transaction.date)}</p>
                 </div>
 
                 {/* Amount */}
-                <span className={`text-sm font-semibold ${isIncome ? 'amount--income' : 'amount--expense'}`}>
+                <span className={`relative z-10 text-sm font-semibold ${isIncome ? 'amount--income' : 'amount--expense'}`}>
                   {isIncome ? '+' : '-'}{formatAmount(transaction.amount)}
                 </span>
               </div>
