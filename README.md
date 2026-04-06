@@ -91,6 +91,7 @@ UI components adapt layout, spacing, and data formatting for smaller screens.
 ## Getting Started
 
 ```bash
+git clone https://github.com/ANKANJAGTAP/Zorvyn-Finance-Dashboard.git
 npm install
 npm run dev
 ```
