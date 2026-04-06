@@ -16,10 +16,30 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   Info,
+  UtensilsCrossed,
+  Car,
+  ShoppingBag,
+  Receipt,
+  Gamepad2,
+  Briefcase,
+  Laptop,
+  Target
 } from 'lucide-react'
 import useStore from '../store/useStore'
 import { formatAmount } from '../utils/formatters'
 import EmptyState from '../components/EmptyState'
+import Button from '../components/ui/Button'
+import { AreaChart, Area, ResponsiveContainer } from 'recharts'
+
+const iconMap = {
+  Food: UtensilsCrossed,
+  Transport: Car,
+  Shopping: ShoppingBag,
+  Bills: Receipt,
+  Entertainment: Gamepad2,
+  Salary: Briefcase,
+  Freelance: Laptop,
+}
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -43,18 +63,27 @@ const fadeUp = {
 }
 
 function getHealthScore(insights) {
+  const savingsRate = Number(insights.savingsRate)
+  const monthlyChange =
+    insights.monthlyChange !== null
+      ? Number(insights.monthlyChange)
+      : null
+  const topCategoryPercentage = insights.topCategory
+    ? Number(insights.topCategory.percentage)
+    : null
+
   let score = 50
-  if (insights.savingsRate > 30) score += 25
-  else if (insights.savingsRate > 15) score += 15
-  else if (insights.savingsRate > 0) score += 5
+  if (savingsRate > 30) score += 25
+  else if (savingsRate > 15) score += 15
+  else if (savingsRate > 0) score += 5
   else score -= 15
 
-  if (insights.monthlyChange !== null) {
-    if (insights.monthlyChange < -5) score += 10
-    else if (insights.monthlyChange > 15) score -= 10
+  if (monthlyChange !== null) {
+    if (monthlyChange < -5) score += 10
+    else if (monthlyChange > 15) score -= 10
   }
 
-  if (insights.topCategory && Number(insights.topCategory.percentage) < 35) {
+  if (topCategoryPercentage !== null && topCategoryPercentage < 35) {
     score += 10
   }
 
@@ -72,45 +101,72 @@ function getHealthLabel(score) {
 }
 
 function generateTips(insights) {
+  const savingsRate = Number(insights.savingsRate)
+  const monthlyChange =
+    insights.monthlyChange !== null
+      ? Number(insights.monthlyChange)
+      : null
+  const topCategoryPercentage = insights.topCategory
+    ? Number(insights.topCategory.percentage)
+    : null
+
   const tips = []
 
-  if (insights.topCategory && Number(insights.topCategory.percentage) > 40) {
+  if (topCategoryPercentage !== null && topCategoryPercentage > 40) {
     tips.push({
+      title: `Cap ${insights.topCategory.name} spend`,
       text: `Your ${insights.topCategory.name} spending is ${insights.topCategory.percentage}% of total — consider setting a budget cap.`,
       type: 'warning',
+      impact: 'High impact',
+      action: 'focus-top-category',
     })
   }
 
-  if (insights.savingsRate > 20) {
+  if (savingsRate > 20) {
     tips.push({
+      title: 'Savings momentum is strong',
       text: `Saving ${insights.savingsRate}% of income — you're on track for your goals.`,
       type: 'success',
+      impact: 'Low effort',
+      action: 'view-all-transactions',
     })
-  } else if (insights.savingsRate >= 0) {
+  } else if (savingsRate >= 0) {
     tips.push({
+      title: 'Increase monthly savings',
       text: `Try to increase your savings rate above 20% for better financial security.`,
       type: 'info',
+      impact: 'Medium impact',
+      action: 'review-expenses',
     })
   }
 
-  if (insights.monthlyChange !== null && insights.monthlyChange > 10) {
+  if (monthlyChange !== null && monthlyChange > 10) {
     tips.push({
+      title: 'Expenses are accelerating',
       text: `Expenses rose ${insights.monthlyChange}% this month — review discretionary spending.`,
       type: 'warning',
+      impact: 'High impact',
+      action: 'review-expenses',
     })
   }
 
-  if (insights.monthlyChange !== null && insights.monthlyChange < -5) {
+  if (monthlyChange !== null && monthlyChange < -5) {
     tips.push({
+      title: 'Great cost control',
       text: `Expenses dropped ${Math.abs(insights.monthlyChange)}% — great job cutting costs.`,
       type: 'success',
+      impact: 'Keep it up',
+      action: 'view-all-transactions',
     })
   }
 
   if (tips.length === 0) {
     tips.push({
+      title: 'Build your insight baseline',
       text: 'Keep tracking consistently to unlock deeper spending patterns.',
       type: 'info',
+      impact: 'Starter step',
+      action: 'view-all-transactions',
     })
   }
 
@@ -120,7 +176,7 @@ function generateTips(insights) {
 function MiniBar({ value, max, color }) {
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0
   return (
-    <div className="h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
+    <div className="h-2 w-full rounded-full bg-white/[0.06] overflow-hidden shadow-inner">
       <motion.div
         initial={{ width: 0 }}
         animate={{ width: `${pct}%` }}
@@ -130,20 +186,30 @@ function MiniBar({ value, max, color }) {
           ease: [0.25, 0.46, 0.45, 0.94],
         }}
         className="h-full rounded-full"
-        style={{ backgroundColor: color }}
+        style={{ 
+          background: `linear-gradient(90deg, ${color}99 0%, ${color} 100%)`,
+          boxShadow: `inset 0 1px 1px rgba(255,255,255,0.2)`
+        }}
       />
     </div>
   )
 }
 
-function ScoreRing({ score, color, size = 80, strokeWidth = 6 }) {
+function ScoreRing({ score, color, size = 80, strokeWidth = 8 }) {
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (score / 100) * circumference
+  const gradientId = `ring-grad-${color.replace('#', '')}`
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={color} />
+            <stop offset="100%" stopColor={color} stopOpacity="0.4" />
+          </linearGradient>
+        </defs>
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -157,7 +223,7 @@ function ScoreRing({ score, color, size = 80, strokeWidth = 6 }) {
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={color}
+          stroke={`url(#${gradientId})`}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -198,7 +264,7 @@ function HoverCard({ children, accentColor, glowColor, className = '', variants,
       className={`relative overflow-hidden rounded-xl border border-white/[0.06] hover:border-white/15 cursor-default group bg-gradient-to-br ${className}`}
       style={{
         boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-        backgroundImage: `linear-gradient(to bottom right, ${glowColor.replace(/[\d.]+\)$/, '0.08)')}, ${glowColor.replace(/[\d.]+\)$/, '0.02)')})`,
+        backgroundImage: `linear-gradient(to bottom right, ${glowColor.replace(/[\d.]+\)$/, '0.04)')}, transparent)`,
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.boxShadow = `0 0 35px ${glowColor}, 0 8px 32px rgba(0,0,0,0.35)`
@@ -217,7 +283,7 @@ function HoverCard({ children, accentColor, glowColor, className = '', variants,
       />
 
       {/* Content */}
-      <div className="relative z-10">{children}</div>
+      <div className="relative z-10 h-full">{children}</div>
     </motion.div>
   )
 }
@@ -230,9 +296,17 @@ export default function Insights() {
   useStore((s) => s.transactions)
   const timeFilter = useStore((s) => s.timeFilter)
   const getInsights = useStore((s) => s.getInsights)
+  const updateFilters = useStore((s) => s.updateFilters)
+  const getCategoryBreakdown = useStore((s) => s.getCategoryBreakdown)
   const insights = getInsights()
   const role = useStore((s) => s.role)
   const periodLabel = TIME_LABELS[timeFilter] || 'last 30 days'
+
+  const topCategories = useMemo(() => {
+    return getCategoryBreakdown()
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 3)
+  }, [getCategoryBreakdown, insights])
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 500)
@@ -243,6 +317,16 @@ export default function Insights() {
   const healthLabel = getHealthLabel(healthScore)
   const tips = useMemo(() => generateTips(insights), [insights])
   const HealthIcon = healthLabel.icon
+  const monthlyChangeValue =
+    insights.monthlyChange !== null
+      ? Number(insights.monthlyChange)
+      : null
+  const savingsRateValue = Number(insights.savingsRate)
+  const topCategoryPercentage = insights.topCategory
+    ? Number(insights.topCategory.percentage)
+    : null
+  const netBalance = insights.currentIncome - insights.currentExpense
+  const incomeExpenseTotal = insights.currentIncome + insights.currentExpense
 
   const hasZeroData =
     !insights.topCategory &&
@@ -264,6 +348,178 @@ export default function Insights() {
     : 'rgba(34, 195, 142, 0.2)'
 
   const savingsAccent = insights.savingsRate < 0 ? '#F59E0B' : '#22C38E'
+
+  const healthBreakdown = useMemo(() => {
+    const trendScore =
+      monthlyChangeValue === null
+        ? 50
+        : Math.max(0, Math.min(100, 50 - monthlyChangeValue * 2.5))
+
+    const savingsScore = Math.max(
+      0,
+      Math.min(100, ((savingsRateValue + 20) / 50) * 100)
+    )
+
+    const concentrationScore =
+      topCategoryPercentage === null
+        ? 50
+        : Math.max(0, Math.min(100, 100 - topCategoryPercentage))
+
+    return [
+      {
+        key: 'savings',
+        label: 'Savings strength',
+        value: savingsScore,
+        color: '#22C38E',
+        helper:
+          savingsRateValue >= 20
+            ? `${savingsRateValue}% saved`
+            : `${savingsRateValue}% saved`,
+      },
+      {
+        key: 'trend',
+        label: 'Expense trend',
+        value: trendScore,
+        color: monthlyChangeValue !== null && monthlyChangeValue > 0 ? '#EF4444' : '#427CF0',
+        helper:
+          monthlyChangeValue === null
+            ? 'Not enough prior data'
+            : `${monthlyChangeValue > 0 ? '+' : ''}${monthlyChangeValue}% vs previous`,
+      },
+      {
+        key: 'focus',
+        label: 'Spend concentration',
+        value: concentrationScore,
+        color: '#855CD6',
+        helper:
+          topCategoryPercentage === null
+            ? 'No category concentration yet'
+            : `${topCategoryPercentage}% in top category`,
+      },
+    ]
+  }, [monthlyChangeValue, savingsRateValue, topCategoryPercentage])
+
+  const primaryInsight = useMemo(() => {
+    if (insights.currentIncome === 0) {
+      return {
+        eyebrow: 'Priority Action',
+        title: 'Add at least one income transaction',
+        description:
+          'Income entries unlock accurate savings rate, health score stability, and better recommendations.',
+        badge: 'Setup required',
+        badgeClass: 'bg-warning/10 text-warning',
+        actionLabel: 'Add income',
+        action: 'focus-income',
+      }
+    }
+
+    if (netBalance < 0) {
+      return {
+        eyebrow: 'Priority Action',
+        title: `Reduce spending by ${formatAmount(Math.abs(netBalance))}`,
+        description:
+          'You are currently spending more than you earn in this period. Focus on the biggest expense category first.',
+        badge: 'Critical',
+        badgeClass: 'bg-danger/10 text-danger',
+        actionLabel: 'Review expenses',
+        action: 'review-expenses',
+      }
+    }
+
+    if (topCategoryPercentage !== null && topCategoryPercentage > 40) {
+      return {
+        eyebrow: 'Priority Action',
+        title: `Cap ${insights.topCategory.name} below 35%`,
+        description:
+          'One category is dominating your spend. Set a limit and monitor this category weekly.',
+        badge: 'High impact',
+        badgeClass: 'bg-warning/10 text-warning',
+        actionLabel: `View ${insights.topCategory.name}`,
+        action: 'focus-top-category',
+      }
+    }
+
+    if (monthlyChangeValue !== null && monthlyChangeValue > 10) {
+      return {
+        eyebrow: 'Priority Action',
+        title: `Bring expenses down by ${Math.abs(monthlyChangeValue)}%`,
+        description:
+          'Your expense trend is rising versus the previous period. Cutting discretionary spend now can protect savings.',
+        badge: 'Watch trend',
+        badgeClass: 'bg-danger/10 text-danger',
+        actionLabel: 'Inspect transactions',
+        action: 'review-expenses',
+      }
+    }
+
+    if (savingsRateValue >= 20) {
+      return {
+        eyebrow: 'Priority Action',
+        title: 'Your savings habit is strong',
+        description:
+          'You are saving above the 20% benchmark. Keep consistency and track your largest category each week.',
+        badge: 'On track',
+        badgeClass: 'bg-success/10 text-success',
+        actionLabel: 'See all transactions',
+        action: 'view-all-transactions',
+      }
+    }
+
+    return {
+      eyebrow: 'Priority Action',
+      title: 'Push savings above 20%',
+      description:
+        'Small weekly cuts in top discretionary categories can improve your monthly savings rate quickly.',
+      badge: 'Opportunity',
+      badgeClass: 'bg-primary/10 text-primary',
+      actionLabel: 'Find reduction areas',
+      action: 'review-expenses',
+    }
+  }, [
+    insights.currentIncome,
+    insights.topCategory,
+    monthlyChangeValue,
+    netBalance,
+    savingsRateValue,
+    topCategoryPercentage,
+  ])
+
+  const runInsightAction = (action) => {
+    const resetFilters = {
+      type: 'all',
+      category: 'all',
+      search: '',
+      sortBy: 'date',
+      startDate: '',
+      endDate: '',
+    }
+
+    if (action === 'focus-income') {
+      updateFilters({ ...resetFilters, type: 'income' })
+      navigate('/transactions')
+      return
+    }
+
+    if (action === 'review-expenses') {
+      updateFilters({ ...resetFilters, type: 'expense', sortBy: 'amount-high' })
+      navigate('/transactions')
+      return
+    }
+
+    if (action === 'focus-top-category' && insights.topCategory?.name) {
+      updateFilters({
+        ...resetFilters,
+        type: 'expense',
+        category: insights.topCategory.name,
+        sortBy: 'amount-high',
+      })
+      navigate('/transactions')
+      return
+    }
+
+    updateFilters(resetFilters)
+    navigate('/transactions')
+  }
 
   if (loading) {
     return (
@@ -353,202 +609,208 @@ export default function Insights() {
         </div>
       </div>
 
-      {/* ─── Top Row: Health Score + Income vs Expense ─── */}
-      <motion.div
-        variants={stagger}
-        initial="initial"
-        animate="animate"
-        className="grid grid-cols-1 lg:grid-cols-3 gap-5"
-      >
-        {/* Health Score Card */}
+      <motion.div variants={fadeUp} initial="initial" animate="animate">
         <HoverCard
-          variants={fadeUp}
-          accentColor={healthLabel.color}
-          glowColor={healthGlow}
-        >
-          <div className="p-6 flex items-center gap-6">
-            <ScoreRing
-              score={healthScore}
-              color={healthLabel.color}
-              size={88}
-              strokeWidth={7}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-text-muted text-xs font-medium uppercase tracking-wider mb-1">
-                Financial Health
-              </p>
-              <div className="flex items-center gap-2 mb-2">
-                <HealthIcon
-                  size={16}
-                  style={{ color: healthLabel.color }}
-                />
-                <span
-                  className="text-sm font-bold"
-                  style={{ color: healthLabel.color }}
-                >
-                  {healthLabel.text}
-                </span>
-              </div>
-              <p className="text-text-muted text-xs leading-relaxed line-clamp-2">
-                {healthScore >= 60
-                  ? 'Your finances are in a healthy state. Keep it up.'
-                  : "There's room for improvement. Check the tips below."}
-              </p>
-            </div>
-          </div>
-        </HoverCard>
-
-        {/* Income vs Expense Breakdown */}
-        <HoverCard
-          variants={fadeUp}
           accentColor="#427CF0"
           glowColor="rgba(66, 124, 240, 0.2)"
-          className="lg:col-span-2"
+          className="before:absolute before:inset-[0px] before:rounded-xl before:border before:border-white/[0.06]"
         >
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-5">
-              <p className="text-text-muted text-xs font-medium uppercase tracking-wider">
-                Income vs Expenses
-              </p>
-              {insights.monthlyChange !== null && (
-                <div
-                  className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg ${
-                    insights.monthlyChange <= 0
-                      ? 'bg-success/10 text-success'
-                      : 'bg-danger/10 text-danger'
-                  }`}
+          <div className="p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <span className="text-[11px] uppercase tracking-wider text-text-muted font-semibold">
+                  {primaryInsight.eyebrow}
+                </span>
+                <span
+                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg ${primaryInsight.badgeClass}`}
                 >
-                  {insights.monthlyChange <= 0 ? (
-                    <ArrowDownRight size={13} />
-                  ) : (
-                    <ArrowUpRight size={13} />
-                  )}
-                  {Math.abs(insights.monthlyChange)}% vs last month
-                </div>
-              )}
+                  {primaryInsight.badge}
+                </span>
+              </div>
+              <h2 className="text-white text-lg font-semibold leading-snug mb-1.5">
+                {primaryInsight.title}
+              </h2>
+              <p className="text-sm text-text-secondary max-w-2xl leading-relaxed">
+                {primaryInsight.description}
+              </p>
             </div>
 
-            <div className="space-y-4">
-              {/* Income Row */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-success/10 border border-success/20 flex items-center justify-center">
-                      <ArrowUpRight size={14} className="text-success" />
-                    </div>
-                    <span className="text-sm text-text-secondary font-medium">
-                      Income
-                    </span>
-                  </div>
-                  <span className="text-white font-semibold text-sm tabular-nums">
-                    {formatAmount(insights.currentIncome)}
+            <div className="flex flex-col sm:flex-row gap-2.5 sm:items-center lg:justify-end">
+              {role === 'admin' && (
+                <Button
+                  size="md"
+                  onClick={() => runInsightAction(primaryInsight.action)}
+                  className="whitespace-nowrap"
+                >
+                  <Target size={15} />
+                  {primaryInsight.actionLabel}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="px-5 sm:px-6 pb-5 sm:pb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <p className="text-[11px] uppercase tracking-wider text-text-muted">Income</p>
+                  <span className="text-[11px] font-semibold text-success tabular-nums">
+                    {incomeExpenseTotal > 0
+                      ? `${((insights.currentIncome / incomeExpenseTotal) * 100).toFixed(1)}%`
+                      : '0%'}
                   </span>
                 </div>
+                <p className="text-sm font-semibold text-white tabular-nums mb-2">
+                  {formatAmount(insights.currentIncome)}
+                </p>
                 <MiniBar
                   value={insights.currentIncome}
                   max={incomeExpenseMax}
                   color="#22C38E"
                 />
               </div>
-
-              {/* Expense Row */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-danger/10 border border-danger/20 flex items-center justify-center">
-                      <ArrowDownRight size={14} className="text-danger" />
-                    </div>
-                    <span className="text-sm text-text-secondary font-medium">
-                      Expenses
-                    </span>
-                  </div>
-                  <span className="text-white font-semibold text-sm tabular-nums">
-                    {formatAmount(insights.currentExpense)}
+              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <p className="text-[11px] uppercase tracking-wider text-text-muted">Expenses</p>
+                  <span className="text-[11px] font-semibold text-danger tabular-nums">
+                    {incomeExpenseTotal > 0
+                      ? `${((insights.currentExpense / incomeExpenseTotal) * 100).toFixed(1)}%`
+                      : '0%'}
                   </span>
                 </div>
+                <p className="text-sm font-semibold text-white tabular-nums mb-2">
+                  {formatAmount(insights.currentExpense)}
+                </p>
                 <MiniBar
                   value={insights.currentExpense}
                   max={incomeExpenseMax}
                   color="#EF4444"
                 />
               </div>
-
-              {/* Net */}
-              <div className="pt-3 border-t border-white/[0.04] flex items-center justify-between">
-                <span className="text-text-muted text-xs font-medium">
-                  Net Balance
-                </span>
-                <span
-                  className={`text-sm font-bold tabular-nums ${
-                    insights.currentIncome - insights.currentExpense >= 0
-                      ? 'text-success'
-                      : 'text-danger'
-                  }`}
-                >
-                  {insights.currentIncome - insights.currentExpense >= 0
-                    ? '+'
-                    : ''}
-                  {formatAmount(
-                    insights.currentIncome - insights.currentExpense
-                  )}
-                </span>
+              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                <p className="text-[11px] uppercase tracking-wider text-text-muted mb-1">Net</p>
+                <p className={`text-sm font-semibold tabular-nums ${netBalance >= 0 ? 'text-success' : 'text-danger'}`}>
+                  {netBalance >= 0 ? '+' : ''}
+                  {formatAmount(netBalance)}
+                </p>
               </div>
             </div>
           </div>
         </HoverCard>
       </motion.div>
 
-      {/* ─── Metric Cards Row ─── */}
+      {/* ─── Metric Cards Grid (Bento) ─── */}
       <motion.div
         variants={stagger}
         initial="initial"
         animate="animate"
-        className="grid grid-cols-1 md:grid-cols-3 gap-5"
+        className="grid grid-cols-1 lg:grid-cols-3 gap-5"
       >
+        {/* Health Score Card - Left Col spans 2 Rows */}
+        <HoverCard
+          variants={fadeUp}
+          accentColor={healthLabel.color}
+          glowColor={healthGlow}
+          className="lg:row-span-2"
+        >
+          <div className="p-6">
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <p className="text-text-muted text-xs font-medium uppercase tracking-wider">
+                Financial Health
+              </p>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.08]">
+                <HealthIcon size={14} style={{ color: healthLabel.color }} />
+                <span className="text-xs font-semibold" style={{ color: healthLabel.color }}>
+                  {healthLabel.text}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 mb-4">
+              <ScoreRing
+                score={healthScore}
+                color={healthLabel.color}
+                size={94}
+                strokeWidth={7}
+              />
+              <div className="min-w-0">
+                <p className="text-white text-base font-semibold leading-tight mb-1">
+                  {healthScore >= 60
+                    ? 'Financial position is stable'
+                    : 'Financial position needs attention'}
+                </p>
+                <p className="text-text-secondary text-xs leading-relaxed">
+                  Score combines your savings rate, expense trend, and how concentrated spending is in one category.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {healthBreakdown.map((item) => (
+                <div key={item.key} className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-2.5">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-[11px] text-text-secondary font-medium">{item.label}</span>
+                    <span className="text-[11px] text-text-muted tabular-nums">{item.helper}</span>
+                  </div>
+                  <MiniBar value={item.value} max={100} color={item.color} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </HoverCard>
+
         {/* Top Spending Category */}
         <HoverCard
           variants={fadeUp}
           accentColor="#EF4444"
           glowColor="rgba(239, 68, 68, 0.18)"
+          className="flex flex-col h-full lg:col-span-2"
         >
-          <div className="p-6">
+          <div className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
+              <p className="text-text-muted text-xs font-medium uppercase tracking-wider">
+                Top Areas of Spending
+              </p>
               <div className="w-10 h-10 rounded-xl bg-danger/10 border border-danger/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <TrendingDown size={18} className="text-danger" />
               </div>
-              {insights.topCategory && (
-                <span
-                  className="text-[11px] font-bold px-2.5 py-1 rounded-lg tabular-nums"
-                  style={{
-                    background: 'rgba(239, 68, 68, 0.1)',
-                    color: '#EF4444',
-                  }}
-                >
-                  {insights.topCategory.percentage}%
-                </span>
-              )}
             </div>
-            <p className="text-text-muted text-xs font-medium uppercase tracking-wider mb-2">
-              Top Spending
-            </p>
-            {insights.topCategory ? (
-              <>
-                <p className="text-white text-lg font-bold mb-1">
-                  {insights.topCategory.name}
-                </p>
-                <p className="text-text-muted text-sm tabular-nums">
-                  {formatAmount(insights.topCategory.amount)}
-                </p>
-                <div className="mt-4">
-                  <MiniBar
-                    value={Number(insights.topCategory.percentage)}
-                    max={100}
-                    color="#EF4444"
-                  />
-                </div>
-              </>
+            
+            {topCategories.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-auto">
+                {topCategories.map((cat, idx) => (
+                  <div key={idx} className="flex flex-col">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
+                        {(() => {
+                          const Icon = iconMap[cat.name] || Receipt
+                          return <Icon size={14} className="text-white" />
+                        })()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-white text-sm font-bold truncate">
+                          {cat.name}
+                        </p>
+                        <p className="text-text-muted text-xs tabular-nums">
+                          {formatAmount(cat.value)}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <MiniBar
+                        value={Number(cat.percentage)}
+                        max={100}
+                        color={idx === 0 ? "#EF4444" : idx === 1 ? "#F59E0B" : "#855CD6"}
+                      />
+                      <p className="text-[10px] text-text-muted mt-1.5 text-right">
+                        {cat.percentage}% of expenses
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <div className="py-2">
+              <div className="py-2 mt-auto">
                 <p className="text-text-muted text-sm">
                   No expense data recorded yet.
                 </p>
@@ -565,39 +827,48 @@ export default function Insights() {
           </div>
         </HoverCard>
 
-        {/* Monthly Comparison */}
+        {/* Expense Trend */}
         <HoverCard
           variants={fadeUp}
-          accentColor="#427CF0"
-          glowColor="rgba(66, 124, 240, 0.2)"
+          accentColor={monthlyChangeValue > 0 ? '#EF4444' : '#22C38E'}
+          glowColor={monthlyChangeValue > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 195, 142, 0.2)'}
+          className="flex flex-col h-full lg:col-span-1"
         >
-          <div className="p-6">
+          <div className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <TrendingUp size={18} className="text-primary" />
-              </div>
-              {insights.hasEnoughData &&
-                insights.monthlyChange !== null && (
-                  <span
-                    className={`text-[11px] font-bold px-2.5 py-1 rounded-lg tabular-nums ${
-                      insights.monthlyChange <= 0
-                        ? 'bg-success/10 text-success'
-                        : 'bg-danger/10 text-danger'
-                    }`}
-                  >
-                    {insights.monthlyChange > 0 ? '+' : ''}
-                    {insights.monthlyChange}%
-                  </span>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 ${
+                monthlyChangeValue !== null
+                  ? monthlyChangeValue > 0 
+                    ? 'bg-danger/10 border border-danger/20' 
+                    : 'bg-success/10 border border-success/20'
+                  : 'bg-primary/10 border border-primary/20'
+              }`}>
+                {monthlyChangeValue !== null && monthlyChangeValue > 0 ? (
+                  <TrendingUp size={18} className="text-danger" />
+                ) : (
+                  <TrendingDown size={18} className={monthlyChangeValue !== null ? "text-success" : "text-primary"} />
                 )}
+              </div>
+              {insights.hasEnoughData && monthlyChangeValue !== null && (
+                <span
+                  className={`text-[11px] font-bold px-2.5 py-1 rounded-lg tabular-nums flex items-center gap-1 ${
+                    monthlyChangeValue <= 0
+                      ? 'bg-success/10 text-success'
+                      : 'bg-danger/10 text-danger'
+                  }`}
+                >
+                  {monthlyChangeValue > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                  {Math.abs(monthlyChangeValue)}%
+                </span>
+              )}
             </div>
             <p className="text-text-muted text-xs font-medium uppercase tracking-wider mb-2">
-              Monthly Change
+              Expense Trend
             </p>
-            {insights.hasEnoughData && insights.monthlyChange !== null ? (
+            {insights.hasEnoughData && monthlyChangeValue !== null ? (
               <>
                 <p className="text-white text-lg font-bold mb-1">
-                  {insights.monthlyChange > 0 ? 'Increased' : 'Decreased'}{' '}
-                  {Math.abs(insights.monthlyChange)}%
+                  Expenses {monthlyChangeValue > 0 ? 'increased' : 'decreased'} by {Math.abs(monthlyChangeValue)}%
                 </p>
                 <div className="flex items-center gap-3 text-xs text-text-muted mt-1">
                   <span className="tabular-nums">
@@ -608,35 +879,27 @@ export default function Insights() {
                     Was {formatAmount(insights.prevExpense)}
                   </span>
                 </div>
-                <div className="mt-4 flex gap-1.5">
-                  {[...Array(12)].map((_, i) => {
-                    const isActive =
-                      i <
-                      Math.min(
-                        Math.abs(insights.monthlyChange) / 3,
-                        12
-                      )
-                    return (
-                      <motion.div
-                        key={i}
-                        initial={{ scaleY: 0 }}
-                        animate={{ scaleY: 1 }}
-                        transition={{
-                          delay: 0.4 + i * 0.04,
-                          duration: 0.3,
-                        }}
-                        className="flex-1 h-6 rounded-sm origin-bottom"
-                        style={{
-                          backgroundColor: isActive
-                            ? insights.monthlyChange <= 0
-                              ? `rgba(34, 195, 142, ${0.2 + i * 0.06})`
-                              : `rgba(239, 68, 68, ${0.2 + i * 0.06})`
-                            : 'rgba(255,255,255,0.03)',
-                        }}
-                      />
-                    )
-                  })}
+                <div className="mt-4 h-10 w-full overflow-hidden relative">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={[
+                      { v: insights.prevExpense },
+                      { v: insights.prevExpense + (insights.currentExpense - insights.prevExpense) * 0.3 },
+                      { v: insights.prevExpense + (insights.currentExpense - insights.prevExpense) * 0.7 },
+                      { v: insights.currentExpense }
+                    ]}>
+                      <defs>
+                        <linearGradient id="spark-color" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={monthlyChangeValue <= 0 ? '#22C38E' : '#EF4444'} stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor={monthlyChangeValue <= 0 ? '#22C38E' : '#EF4444'} stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <Area type="monotone" dataKey="v" stroke={monthlyChangeValue <= 0 ? '#22C38E' : '#EF4444'} strokeWidth={2} fillOpacity={1} fill="url(#spark-color)" animationDuration={1000} />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
+                <p className="text-[11px] text-text-muted mt-2">
+                  Compared to your expenses from the previous {periodLabel.replace('last ', '')}.
+                </p>
               </>
             ) : (
               <div className="py-2">
@@ -656,8 +919,9 @@ export default function Insights() {
           variants={fadeUp}
           accentColor={savingsAccent}
           glowColor={savingsGlow}
+          className="flex flex-col h-full lg:col-span-1"
         >
-          <div className="p-6">
+          <div className="p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
               <div
                 className={`w-10 h-10 rounded-xl flex items-center justify-center border group-hover:scale-110 transition-transform duration-300 ${
@@ -711,24 +975,35 @@ export default function Insights() {
                           insights.currentExpense
                       )} saved`}
                 </p>
-                <div className="mt-4">
-                  <MiniBar
-                    value={Math.max(insights.savingsRate, 0)}
-                    max={100}
-                    color={
-                      insights.savingsRate < 0 ? '#F59E0B' : '#22C38E'
-                    }
-                  />
-                  <div className="flex justify-between mt-1.5">
-                    <span className="text-[10px] text-text-muted">0%</span>
-                    <span className="text-[10px] text-text-muted">
-                      Target 20%
-                    </span>
-                    <span className="text-[10px] text-text-muted">
-                      100%
-                    </span>
+                {insights.savingsRate < 0 ? (
+                  <div className="mt-4 p-3 rounded-lg border border-warning/20 bg-warning/5 flex flex-col items-center justify-center relative overflow-hidden">
+                    <motion.div 
+                      className="absolute inset-0 bg-warning/10" 
+                      initial={{ opacity: 0 }} 
+                      animate={{ opacity: [0, 0.4, 0] }} 
+                      transition={{ duration: 2, repeat: Infinity }} 
+                    />
+                    <AlertCircle size={18} className="text-warning mb-1 relative z-10" />
+                    <span className="text-xs text-warning font-semibold relative z-10">Deficit State</span>
                   </div>
-                </div>
+                ) : (
+                  <div className="mt-4">
+                    <MiniBar
+                      value={insights.savingsRate}
+                      max={100}
+                      color="#22C38E"
+                    />
+                    <div className="flex justify-between mt-1.5">
+                      <span className="text-[10px] text-text-muted">0%</span>
+                      <span className="text-[10px] text-text-muted">
+                        Target 20%
+                      </span>
+                      <span className="text-[10px] text-text-muted">
+                        100%
+                      </span>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <div className="py-2">
@@ -752,10 +1027,19 @@ export default function Insights() {
       {/* ─── Smart Tips Section ─── */}
       <motion.div variants={fadeUp} initial="initial" animate="animate">
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles size={16} className="text-primary" />
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <Sparkles size={16} className="text-primary" />
+          </motion.div>
           <h2 className="text-white text-sm font-semibold">
             Recommendations
           </h2>
+          <span className="text-[11px] text-text-muted hidden sm:inline-flex items-center gap-1">
+            <Info size={12} />
+            Prioritized by impact
+          </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -797,18 +1081,35 @@ export default function Insights() {
                 <HoverCard
                   accentColor={cfg.accentColor}
                   glowColor={cfg.glowColor}
+                  className="before:absolute before:inset-[0px] before:rounded-xl before:border-[1.5px] before:border-transparent before:bg-gradient-to-r before:from-transparent before:via-white/[0.08] before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-500 overflow-hidden"
                 >
-                  <div className="p-4">
-                    <div className="flex gap-3">
-                      <div className="flex-shrink-0 mt-0.5">
-                        <TipIcon
-                          size={15}
-                          className={cfg.iconColor}
-                        />
+                  <div className="p-4 flex gap-3 relative z-10">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <TipIcon
+                        size={15}
+                        className={cfg.iconColor}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <p className="text-white text-[13px] font-semibold leading-snug">
+                          {tip.title}
+                        </p>
+                        <span className="text-[10px] text-text-muted px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.06] whitespace-nowrap">
+                          {tip.impact}
+                        </span>
                       </div>
                       <p className="text-text-secondary text-[13px] leading-relaxed">
                         {tip.text}
                       </p>
+                      {role === 'admin' && (
+                        <button
+                          onClick={() => runInsightAction(tip.action)}
+                          className="mt-2 text-xs font-medium text-primary hover:text-primary/85 transition-colors inline-flex items-center gap-1"
+                        >
+                          Take action <ArrowRight size={12} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </HoverCard>

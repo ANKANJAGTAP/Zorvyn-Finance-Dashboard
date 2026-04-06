@@ -117,7 +117,7 @@ export default function BalanceHeroCard({ loading, onAddTransaction }) {
       <div className="relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
-          <span className="text-text-secondary text-sm font-medium">Total Balance</span>
+          <h3 className="text-[rgb(var(--text-primary))] font-semibold text-base">Total Balance</h3>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 border bg-primary/[0.06] border-primary/[0.15]">
             <Wallet size={18} className="text-primary" />
           </div>

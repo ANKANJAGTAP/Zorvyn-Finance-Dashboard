@@ -27,8 +27,20 @@ const useStore = create(
 
       // ─── Derived Data (computed via getters) ──────
       getFilteredTransactions: () => {
-        const { transactions, filters } = get()
+        const { transactions, filters, timeFilter } = get()
         let filtered = [...transactions]
+
+        // Global time filter (only if no custom date range is set)
+        if (!filters.startDate && !filters.endDate) {
+          const now = new Date()
+          const daysMap = { '7d': 7, '30d': 30, '90d': 90 }
+          if (daysMap[timeFilter]) {
+            const days = daysMap[timeFilter]
+            const cutoff = new Date(now)
+            cutoff.setDate(cutoff.getDate() - days)
+            filtered = filtered.filter(t => new Date(t.date) >= cutoff)
+          }
+        }
 
         // Search filter
         if (filters.search) {

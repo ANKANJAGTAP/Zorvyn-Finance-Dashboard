@@ -98,6 +98,7 @@ export default function Transactions() {
   const filters = useStore(s => s.filters)
   const updateFilters = useStore(s => s.updateFilters)
   useStore(s => s.transactions)
+  const timeFilter = useStore(s => s.timeFilter) // Added timeFilter subscription
   const getFilteredTransactions = useStore(s => s.getFilteredTransactions)
   const deleteTransaction = useStore(s => s.deleteTransaction)
   const deleteAllTransactions = useStore(s => s.deleteAllTransactions)
@@ -121,7 +122,7 @@ export default function Transactions() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [filters.search, filters.type, filters.category, filters.sortBy])
+  }, [filters.search, filters.type, filters.category, filters.sortBy, filters.startDate, filters.endDate, timeFilter])
 
   // Keep currentPage in bounds when transactions change
   useEffect(() => {

@@ -369,31 +369,31 @@ export default function SavingsGauge({ loading }) {
         <div className="flex items-center gap-1 p-1 rounded-lg bg-white/[0.05] mb-4 self-center">
           <button
             onClick={() => setActiveTab('savings')}
-            className={`p-1.5 px-2.5 rounded-md text-[11px] font-semibold uppercase tracking-wider transition-all duration-200 ${
+            className={`p-1.5 px-3 rounded-md text-sm font-semibold transition-all duration-200 ${
               activeTab === 'savings'
                 ? 'bg-accent-purple/20 text-accent-purple'
-                : 'text-text-muted hover:text-white'
+                : 'text-text-muted hover:text-[rgb(var(--text-primary))]'
             }`}
             aria-label="Show savings rate"
             aria-pressed={activeTab === 'savings'}
           >
             <span className="flex items-center gap-1.5">
-              <Percent size={12} />
+              <Percent size={14} />
               Savings
             </span>
           </button>
           <button
             onClick={() => setActiveTab('spending')}
-            className={`p-1.5 px-2.5 rounded-md text-[11px] font-semibold uppercase tracking-wider transition-all duration-200 ${
+            className={`p-1.5 px-3 rounded-md text-sm font-semibold transition-all duration-200 ${
               activeTab === 'spending'
                 ? 'bg-primary/20 text-primary'
-                : 'text-text-muted hover:text-white'
+                : 'text-text-muted hover:text-[rgb(var(--text-primary))]'
             }`}
             aria-label="Show spending breakdown"
             aria-pressed={activeTab === 'spending'}
           >
             <span className="flex items-center gap-1.5">
-              <PieIcon size={12} />
+              <PieIcon size={14} />
               Spending
             </span>
           </button>

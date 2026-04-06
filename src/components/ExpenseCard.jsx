@@ -109,20 +109,20 @@ export default function ExpenseCard({ loading }) {
 
       <div className="relative z-10">
         {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-text-secondary text-sm font-medium">Expenses</span>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 border bg-danger/[0.06] border-danger/[0.15]">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <h3 className="text-[rgb(var(--text-primary))] font-semibold text-base whitespace-nowrap">Expenses</h3>
+          <div className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 border bg-danger/[0.06] border-danger/[0.15]">
             <TrendingDown size={18} className="text-danger" />
           </div>
         </div>
 
         {/* Amount */}
-        <p className="text-lg sm:text-2xl font-bold text-white mb-2">
+        <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-[rgb(var(--text-primary))] mb-2">
           <AnimatedCounter value={totalExpense} isCurrency className="tabular-nums" />
         </p>
 
         {/* Change badge */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-1.5 mb-4">
           <div className="flex items-center gap-1">
             {isIncreased ? (
               <TrendingUp size={14} className="text-danger" />
