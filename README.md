@@ -16,8 +16,7 @@ This project simulates a production-style finance dashboard used to track transa
 - Scalable state management  
 - Consistent data-driven rendering  
 - Responsive and accessible user experience  
-
-In a production environment, server state would be managed using TanStack Query and real-time updates via WebSockets.
+-In a production environment, server state would be managed using TanStack Query and real-time updates via WebSockets.
 ---
 
 ## Features
