@@ -71,8 +71,7 @@ This project simulates a production-style finance dashboard used to track transa
 - Zustand (state management)  
 - Recharts (data visualization)  
 - Framer Motion (animations)  
-- Lucide React (icons)  
-- Sonner (notifications)  
+- Lucide React (icons)   
 - React-Markdown (rendered AI output)
 
 ---
