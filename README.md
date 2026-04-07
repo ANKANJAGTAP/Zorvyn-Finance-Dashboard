@@ -18,18 +18,6 @@ This project simulates a production-style finance dashboard used to track transa
 - Responsive and accessible user experience  
 
 In a production environment, server state would be managed using TanStack Query and real-time updates via WebSockets.
-
----
-
-## Why This Project Stands Out
-
-- Designed with product-level thinking, not just UI implementation  
-- Strong emphasis on data consistency across all components  
-- Performance-aware architecture using lazy loading and skeleton states  
-- Accessibility considerations including focus trapping and keyboard navigation  
-- Clean separation of concerns using Zustand for predictable state flow  
-- Mobile-first responsiveness with adaptive data formatting  
-
 ---
 
 ## Features
@@ -52,6 +40,17 @@ In a production environment, server state would be managed using TanStack Query 
 - Savings rate calculation  
 - AI-style summary for quick understanding  
 
+### AI Assistant (Zorvyn AI)
+- Fully integrated context-aware generative AI using Gemini 
+- Live streaming responses for zero-latency feel
+- Reads dashboard state (Insights, categories, transactions) for personalized assistance
+- Graceful API key cycling and rate-limit handling
+
+### Progressive Web App (PWA)
+- Installable on desktop and mobile as a native app
+- Offline fallback support and asset caching
+- Custom icon set and manifest configuration
+
 ---
 
 ## Engineering Highlights
@@ -66,13 +65,16 @@ In a production environment, server state would be managed using TanStack Query 
 
 ## Tech Stack
 
-- React (Vite)  
+- React (Vite)
+- Progressive Web App (PWA) Support  
+- Google Gemini API (`@google/generative-ai`)
 - Tailwind CSS + CSS Variables  
 - Zustand (state management)  
 - Recharts (data visualization)  
 - Framer Motion (animations)  
 - Lucide React (icons)  
 - Sonner (notifications)  
+- React-Markdown (rendered AI output)
 
 ---
 
@@ -87,6 +89,15 @@ The application is fully responsive and optimized for:
 UI components adapt layout, spacing, and data formatting for smaller screens.
 
 ---
+
+## Why This Project Stands Out
+
+- Designed with product-level thinking, not just UI implementation  
+- Strong emphasis on data consistency across all components  
+- Performance-aware architecture using lazy loading and skeleton states  
+- Accessibility considerations including focus trapping and keyboard navigation  
+- Clean separation of concerns using Zustand for predictable state flow  
+- Mobile-first responsiveness with adaptive data formatting  
 
 ## Getting Started
 

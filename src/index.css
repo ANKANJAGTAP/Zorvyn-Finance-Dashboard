@@ -88,6 +88,7 @@ html {
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 body {
@@ -95,6 +96,7 @@ body {
   color: rgb(var(--text-primary));
   min-height: 100vh;
   overflow-x: hidden;
+  width: 100%;
 }
 
 /* ─── Scrollbar Styling ─── */
@@ -321,3 +323,4 @@ input[type='number'] {
 .transition-default {
   transition: all 200ms ease;
 }
+\n.markdown-body { overflow-wrap: anywhere; word-break: break-word; }

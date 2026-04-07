@@ -16,6 +16,7 @@ const Notifications = lazy(() => import('./pages/Notifications'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const Help = lazy(() => import('./pages/Help'))
 import useStore from './store/useStore'
+import AIChatFloating from './components/AIChatFloating'
 
 export default function App() {
 
@@ -99,7 +100,7 @@ export default function App() {
   const sidebarWidth = isMobile ? 0 : sidebarCollapsed ? 72 : 280
 
   return (
-    <div className="flex min-h-screen relative z-0">
+    <div className="flex w-full min-h-screen relative z-0 overflow-x-hidden">
       <DynamicBackground />
 
       {/* Sidebar */}
@@ -157,33 +158,9 @@ export default function App() {
             </Routes>
           </Suspense>
         </main>
-
-        {/* Global Mobile Floating Action Button (FAB) */}
-        <AnimatePresence>
-          {isMobile && (
-            <motion.button
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                if (role === 'admin') openModal()
-              }}
-              disabled={role !== 'admin'}
-              className={`fixed bottom-6 right-6 z-40 flex items-center justify-center w-14 h-14 rounded-full shadow-xl sm:hidden
-                ${role === 'admin' 
-                  ? 'bg-primary text-white shadow-primary/30 hover:shadow-primary/50 cursor-pointer' 
-                  : 'bg-surface-elevated text-gray-400 border border-border-dim cursor-not-allowed hidden'
-                }
-              `}
-              aria-label={role !== 'admin' ? 'Switch to Admin to add transactions' : 'Add transaction'}
-            >
-              <Plus size={24} />
-            </motion.button>
-          )}
-        </AnimatePresence>
       </div>
+
+      <AIChatFloating />
 
       <TransactionModal
         isOpen={isModalOpen}

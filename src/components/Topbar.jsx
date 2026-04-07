@@ -135,11 +135,11 @@ export default function Topbar({ onAddTransaction, onMenuClick, isMobile }) {
           size="md"
           onClick={onAddTransaction}
           disabled={role !== 'admin'}
-          className="hidden sm:inline-flex"
+          className="inline-flex! px-2 sm:px-4"
           aria-label={role !== 'admin' ? 'Switch to Admin to add transactions' : 'Add transaction'}
         >
           <Plus size={16} />
-          <span className="hidden lg:inline">Add Transaction</span>
+          <span className="hidden sm:inline">Add Transaction</span>
         </Button>
 
         {/* Export */}
